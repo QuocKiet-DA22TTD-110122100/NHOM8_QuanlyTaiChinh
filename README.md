@@ -18,7 +18,7 @@ Xây Dựng Web Quản Lý Tài Chính  NEXT.JS
 
 1. Clone repository:
 ```bash
-git clone [url-repository]
+git clone https://github.com/QuocKiet-DA22TTD-110122100/NHOM8_QuanlyTaiChinh.git
 cd quanlytaichinh
 ```
 
