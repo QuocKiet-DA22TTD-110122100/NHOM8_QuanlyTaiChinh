@@ -9,11 +9,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Kết nối MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error(err));
 
+const port = process.env.PORT;
+const mongoURI = process.env.MONGODB_URI;
+// Kết nối MongoDB
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log('MongoDB connected successfully!');
+        app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+        });
+    })
+    .catch(err => {
+        console.error('Failed to connect to MongoDB', err);
+        process.exit(1); // Nên thoát ứng dụng nếu không kết nối được DB
+    });
 // Middleware xác thực
 const authMiddleware = require('./middleware/auth');
 

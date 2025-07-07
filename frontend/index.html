@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tài Chính</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Thư viện Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="style.css">
+    <!-- Thư viện biểu đồ Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Background động -->
+    <div class="background-gradient">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Container chính -->
+    <div class="glass-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <h3>Quản Lý<br>Tài Chính</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="nav-item active" data-page="dashboard" title="Tổng quan"><i class="fa-solid fa-chart-pie"></i></a>
+                <a class="nav-item" data-page="transactions" title="Giao dịch"><i class="fa-solid fa-right-left"></i></a>
+                <a class="nav-item" data-page="reports" title="Báo cáo"><i class="fa-solid fa-file-invoice"></i></a>
+                <a class="nav-item" data-page="settings" title="Cài đặt"><i class="fa-solid fa-gear"></i></a>
+            </nav>
+            <div class="sidebar-footer">
+                <a id="logout-btn" class="nav-item" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        </aside>
+
+        <!-- Nội dung chính -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-greeting">
+                    <h2>Người Dùng !</h2>
+                    <p>Đây là tài chính của bạn hôm nay.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="action-button add-btn">Thêm Giao Dịch</button>
+                </div>
+            </header>
+            
+            <!-- Bố cục Dashboard -->
+            <div class="dashboard-layout">
+                <div class="kpi-row">
+                    <div class="kpi-card income">
+                        <h4>Tổng Thu Nhập</h4>
+                        <p id="total-income">0 ₫</p>
+                    </div>
+                    <div class="kpi-card expense">
+                        <h4>Tổng Chi Tiêu</h4>
+                        <p id="total-expense">0 ₫</p>
+                    </div>
+                    <div class="balance-card">
+                        <h4>Số Dư Hiện Tại</h4>
+                        <p id="balance">0 ₫</p>
+                    </div>
+                </div>
+                <div class="main-panels">
+                    <div class="transactions-panel">
+                        <h3>Giao Dịch Gần Đây</h3>
+                        <ul id="transaction-list">
+                            <!-- JS sẽ chèn giao dịch vào đây -->
+                        </ul>
+                    </div>
+                    <div class="chart-panel">
+                        <h3>Biến Động Dòng Tiền</h3>
+                        <canvas id="main-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Thêm Giao Dịch -->
+    <div id="add-transaction-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-modal-btn">×</button>
+            <h2>Thêm Giao Dịch Mới</h2>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label>Loại giao dịch</label>
+                    <div class="type-selector">
+                        <input type="radio" id="type-income" name="type" value="income" checked>
+                        <label for="type-income" class="type-label income">Thu</label>
+                        <input type="radio" id="type-expense" name="type" value="expense">
+                        <label for="type-expense" class="type-label expense">Chi</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Mô tả</label>
+                    <input type="text" id="description" placeholder="VD: Ăn tối" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Số tiền (VNĐ)</label>
+                    <input type="number" id="amount" placeholder="VD: 500000" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Ngày</label>
+                    <input type="date" id="date" required>
+                </div>
+                <button type="submit" class="submit-btn">Lưu Giao Dịch</button>
+            </form>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

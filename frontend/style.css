@@ -1,0 +1,360 @@
+/* ======================================================= */
+/* I. CÀI ĐẶT BIẾN TOÀN CỤC & THIẾT LẬP CƠ BẢN          */
+/* ======================================================= */
+:root {
+    --bg-color: #1a1a2e;
+    --primary-glass-bg: rgba(255, 255, 255, 0.1);
+    --border-color: rgba(255, 255, 255, 0.2);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --text-primary: #f0f0f0;
+    --text-secondary: #a9a9a9;
+    --accent-color-1: #e94560;
+    --accent-color-2: #16213e;
+    --accent-color-3: #0f3460;
+    --income-color: #28a745;
+    --expense-color: #dc3545;
+     --chart-income-color: #00f2c3;  
+    --chart-expense-color: #ff5b5b; 
+    --chart-grid-color: rgba(255, 255, 255, 0.1); 
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* ĐÃ BỎ overflow: hidden; ở đây để cho phép main-content cuộn */
+}
+
+/* ======================================================= */
+/* II. BACKGROUND ĐỘNG & CONTAINER CHÍNH                */
+/* ======================================================= */
+.background-gradient {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.7;
+}
+
+.orb-1 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
+    animation: move-orb-1 15s infinite alternate;
+}
+.orb-2 {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, var(--accent-color-3), var(--accent-color-1));
+    animation: move-orb-2 20s infinite alternate;
+}
+.orb-3 {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(135deg, var(--accent-color-2), var(--accent-color-3));
+    animation: move-orb-3 18s infinite alternate;
+}
+
+@keyframes move-orb-1 { from { top: -10%; left: -10%; } to { top: 60%; left: 80%; } }
+@keyframes move-orb-2 { from { top: 80%; left: 20%; } to { top: -20%; left: 60%; } }
+@keyframes move-orb-3 { from { top: 50%; left: -20%; } to { top: 20%; left: 90%; } }
+
+.glass-container {
+    width: 95%;
+    height: 90vh; /* Giữ nguyên chiều cao cố định cho container kính */
+    background: var(--primary-glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px 0 var(--shadow-color);
+    display: flex;
+    overflow: hidden; /* Ngăn container kính tự cuộn, để main-content quản lý */
+}
+
+/* ======================================================= */
+/* III. SIDEBAR & MENU ĐIỀU HƯỚNG                       */
+/* ======================================================= */
+.sidebar {
+    width: 120px; /* Tăng độ rộng để có không gian cho logo */
+    padding: 30px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    margin-bottom: 50px; /* Giữ nguyên khoảng cách */
+    cursor: pointer; /* Thêm con trỏ để biết có thể click */
+    text-align: center;
+}
+
+.sidebar-logo h3 {
+    font-size: 1.3rem; /* Tăng kích thước chữ một chút */
+    font-weight: 700;
+    color: #fff; /* Đặt màu chữ là trắng tinh để hiệu ứng glow đẹp nhất */
+    line-height: 1.5;
+    margin: 0; /* Bỏ margin mặc định của h3 */
+    
+    /* Hiệu ứng Neon Glow với nhiều lớp đổ bóng */
+    text-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8), /* Lớp glow trắng bên trong */
+        0 0 10px var(--accent-color-1), /* Lớp glow màu hồng (accent-color-1) */
+        0 0 15px var(--accent-color-1);
+    
+    transition: text-shadow 0.3s ease-in-out; /* Hiệu ứng chuyển động mượt mà */
+}
+
+.sidebar-logo:hover h3 {
+    /* Tăng cường hiệu ứng glow khi di chuột vào */
+    text-shadow:
+        0 0 8px rgba(255, 255, 255, 1),
+        0 0 20px var(--accent-color-1),
+        0 0 30px var(--accent-color-1);
+}
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    flex-grow: 1;
+}
+.nav-item {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.nav-item:hover, .nav-item.active {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+.nav-item i {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+.nav-item:hover i, .nav-item.active i {
+    color: var(--text-primary);
+}
+
+/* ======================================================= */
+/* IV. NỘI DUNG CHÍNH (MAIN CONTENT & DASHBOARD)        */
+/* ======================================================= */
+.main-content {
+    flex-grow: 1;
+    padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Cho phép cuộn dọc CHỈ trong khu vực này */
+    /* Remove min-height: 0; if it was here, as flex-direction: column handles it */
+}
+
+/* Custom Scrollbar cho main-content */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.main-content::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-shrink: 0; /* Đảm bảo header không bị co lại */
+}
+.main-header h2 { margin: 0; font-size: 1.8rem; }
+.main-header p { margin: 5px 0 0 0; color: var(--text-secondary); }
+.add-btn { background: var(--accent-color-1); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: transform 0.2s ease; }
+.add-btn:hover { transform: scale(1.05); }
+
+
+.dashboard-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 30px;
+    flex-grow: 1; /* CỰC KỲ QUAN TRỌNG: Làm cho dashboard-layout chiếm hết không gian còn lại */
+    /* height: 100%; Không cần nếu dùng flex-grow */
+    min-height: 0; /* Đảm bảo nó có thể co lại nếu nội dung quá lớn, để flex-grow hoạt động */
+}
+
+.column-left, .column-right {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    /* height: 100%; KHI DÙNG GRID VÀ FLEX-GROW CHO NÓ, CHỈ CẦN THẾ NÀY LÀ ĐỦ */
+    /* overflow: hidden; Không cần ở đây, để các panel con quản lý overflow */
+    min-height: 0; /* Cho phép các cột co lại */
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    flex-shrink: 0; /* Đảm bảo KPI grid không bị co nhỏ */
+}
+
+.kpi-card, .balance-card, .transactions-panel, .chart-panel {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid var(--border-color);
+}
+
+.kpi-card h4, .balance-card h4 { margin: 0 0 10px 0; font-weight: 500; color: var(--text-secondary); }
+.kpi-card p, .balance-card p { margin: 0; font-size: 1.8rem; font-weight: 700; }
+.balance-card p { font-size: 2.8rem; }
+.kpi-card.income p { color: var(--income-color); }
+.kpi-card.expense p { color: var(--expense-color); }
+
+
+/* === Panel Giao Dịch Gần Đây === */
+.transactions-panel {
+    flex-grow: 1; /* RẤT QUAN TRỌNG: Làm panel này chiếm hết không gian còn lại trong column-left */
+    display: flex;
+    flex-direction: column;
+    /* overflow: hidden; Không cần ở đây, để #transaction-list quản lý scroll */
+    min-height: 0; /* Cho phép nó co lại */
+}
+.transactions-panel h3 { margin-top: 0; margin-bottom: 20px; flex-shrink: 0; /* Đảm bảo tiêu đề không bị co */ }
+
+#transaction-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto; /* CỰC KỲ QUAN TRỌNG: Tạo thanh cuộn cho chính danh sách này */
+    flex-grow: 1; /* CỰC KỲ QUAN TRỌNG: Làm danh sách này chiếm hết chiều cao còn lại trong transactions-panel */
+    padding-right: 10px; /* Tạo khoảng trống cho thanh cuộn */
+}
+/* Custom Scrollbar cho transaction-list */
+#transaction-list::-webkit-scrollbar {
+  width: 6px;
+}
+#transaction-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+#transaction-list::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+#transaction-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.transaction-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.transaction-item:last-child { border-bottom: none; }
+.transaction-item .description { font-weight: 500; }
+.transaction-item .amount.income { color: var(--income-color); }
+.transaction-item .amount.expense { color: var(--expense-color); }
+
+
+/* === Panel Biểu Đồ === */
+.chart-panel {
+    flex-grow: 1; /* RẤT QUAN TRỌNG: Làm panel biểu đồ chiếm hết không gian còn lại trong column-right */
+    min-height: 300px; /* Đảm bảo biểu đồ có chiều cao tối thiểu */
+    display: flex;
+    flex-direction: column; /* Để tiêu đề và canvas bên trong nó được sắp xếp theo cột */
+}
+.chart-panel h3 { margin-top: 0; margin-bottom: 20px; flex-shrink: 0; /* Đảm bảo tiêu đề không bị co */ }
+/* Canvas bên trong chart-panel sẽ tự động co giãn */
+
+
+/* ======================================================= */
+/* V. MODAL (HỘP THOẠI POP-UP)                          */
+/* ======================================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.modal-overlay:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+.modal-content {
+    background: linear-gradient(145deg, #1e2a4a, #1a1a2e);
+    padding: 30px 40px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    position: relative;
+    width: 90%;
+    max-width: 450px;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+.modal-overlay:not(.hidden) .modal-content {
+    transform: scale(1);
+}
+.close-modal-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-content h2 { text-align: center; margin-top: 0; margin-bottom: 30px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 500; }
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="date"] {
+    width: 100%;
+    padding: 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+.type-selector {
+    display: flex;
+    gap: 10px;
+}
+.type-selector input[type="radio"] { display: none; }
+.type-selector .type-label { flex: 1; text-align: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; }
+.type-selector input:checked + .type-label.income { background-color: var(--income-color); border-color: var(--income-color); color: white; }
+.type-selector input:checked + .type-label.expense { background-color: var(--expense-color); border-color: var(--expense-color); color: white; }
+.submit-btn { width: 100%; padding: 15px; font-size: 1.1rem; font-weight: 600; color: white; background-color: var(--accent-color-1); border: none; border-radius: 10px; cursor: pointer; margin-top: 10px; }
