@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Finance App - Quản lý tài chính</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .transactions { margin-top: 30px; }
+        .transaction { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .income { border-left-color: #28a745; }
+        .expense { border-left-color: #dc3545; }
+        .auth-section { margin-bottom: 30px; padding: 20px; background: #e9ecef; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Quản lý tài chính cá nhân</h1>
+        
+        <div class="auth-section">
+            <h2>Đăng ký / Đăng nhập</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" placeholder="Nhập email">
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu:</label>
+                <input type="password" id="password" placeholder="Nhập mật khẩu">
+            </div>
+            <div class="form-group">
+                <label>Tên (chỉ khi đăng ký):</label>
+                <input type="text" id="name" placeholder="Nhập tên">
+            </div>
+            <button onclick="register()">Đăng ký</button>
+            <button onclick="login()">Đăng nhập</button>
+        </div>
+
+        <div id="mainApp" style="display:none;">
+            <h2>Thêm giao dịch mới</h2>
+            <div class="form-group">
+                <label>Loại giao dịch:</label>
+                <select id="type">
+                    <option value="income">Thu nhập</option>
+                    <option value="expense">Chi tiêu</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số tiền:</label>
+                <input type="number" id="amount" placeholder="Nhập số tiền">
+            </div>
+            <div class="form-group">
+                <label>Mô tả:</label>
+                <textarea id="description" placeholder="Mô tả giao dịch"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Danh mục:</label>
+                <input type="text" id="category" placeholder="Ví dụ: Ăn uống, Xăng xe, Lương">
+            </div>
+            <button onclick="addTransaction()">Thêm giao dịch</button>
+            <button onclick="loadTransactions()">Tải lại danh sách</button>
+            <button onclick="logout()">Đăng xuất</button>
+
+            <div class="transactions" id="transactions">
+                <h2>Danh sách giao dịch</h2>
+                <div id="transactionList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        if(token) {
+            document.getElementById('mainApp').style.display = 'block';
+            document.querySelector('.auth-section').style.display = 'none';
+            loadTransactions();
+        }
+
+       // ...existing code...
+async function register() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const name = document.getElementById('name').value;
+    
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password, username: name}) // Sửa ở đây
+        });
+        const data = await response.json();
+        if(data.success) {
+            alert('Đăng ký thành công! Vui lòng đăng nhập.');
+        } else {
+            alert('Lỗi: ' + data.message);
+        }
+    } catch(err) {
+        alert('Lỗi kết nối: ' + err.message);
+    }
+}
+// ...existing code...
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password})
+                });
+                const data = await response.json();
+                if(data.success) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    document.getElementById('mainApp').style.display = 'block';
+                    document.querySelector('.auth-section').style.display = 'none';
+                    loadTransactions();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch(err) {
+                alert('Lỗi kết nối: ' + err.message);
+            }
+        }
+
+        async function addTransaction() {
+            const type = document.getElementById('type').value;
+            const amount = document.getElementById('amount').value;
+            const description = document.getElementById('description').value;
+            const category = document.getElementById('category').value;
+            
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({type, amount, description, category})
+                });
+                const data = await response.json();
+                if(data.success) {
+                    alert('Thêm giao dịch thành công!');
+                    document.getElementById('amount').value = '';
+                    document.getElementById('description').value = '';
+                    document.getElementById('category').value = '';
+                    loadTransactions();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch(err) {
+                alert('Lỗi kết nối: ' + err.message);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await fetch('/api/transactions', {
+                    headers: {'Authorization': 'Bearer ' + token}
+                });
+                const data = await response.json();
+                if(data.success) {
+                    displayTransactions(data.transactions);
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            } catch(err) {
+                alert('Lỗi kết nối: ' + err.message);
+            }
+        }
+
+        function displayTransactions(transactions) {
+            const list = document.getElementById('transactionList');
+            list.innerHTML = '';
+            transactions.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'transaction ' + t.type;
+                div.innerHTML = `
+                    <strong>${t.type === 'income' ? '+ ' : '- '}${t.amount.toLocaleString()} VND</strong>
+                    <p>Mô tả: ${t.description}</p>
+                    <p>Danh mục: ${t.category}</p>
+                    <small>Ngày: ${new Date(t.date).toLocaleDateString()}</small>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            document.getElementById('mainApp').style.display = 'none';
+            document.querySelector('.auth-section').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
