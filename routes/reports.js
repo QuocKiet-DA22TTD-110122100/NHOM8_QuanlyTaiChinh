@@ -3,6 +3,28 @@ const router = express.Router();
 const Transaction = require('../models/Transaction');
 const logger = require('../config/logger');
 const moment = require('moment');
+const { auth } = require('../middleware/auth');
+const { PDFDocument, rgb } = require('pdf-lib');
+
+// Redis client for caching
+const redis = require('redis');
+const redisClient = redis.createClient({ 
+    url: process.env.REDIS_URL || 'redis://localhost:6379' 
+});
+redisClient.on('error', (err) => logger.error('Redis Client Error', err));
+
+// Initialize Redis connection
+(async () => {
+    try {
+        await redisClient.connect();
+        logger.info('Redis connected for reports caching');
+    } catch (error) {
+        logger.warn('Redis connection failed, proceeding without cache:', error.message);
+    }
+})();
+
+// Use auth middleware for all routes
+router.use(auth);
 
 /**
  * @swagger
@@ -79,6 +101,20 @@ router.get('/summary', async (req, res) => {
         const { period = 'month', startDate, endDate } = req.query;
         const userId = req.user.userId;
 
+        // Create cache key
+        const cacheKey = `reports:summary:${userId}:${period}:${startDate || ''}:${endDate || ''}`;
+
+        try {
+            // Check cache first
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) {
+                logger.info(`Cache hit for reports summary: ${userId}`);
+                return res.json(JSON.parse(cachedData));
+            }
+        } catch (cacheError) {
+            logger.warn('Redis cache error, proceeding without cache:', cacheError.message);
+        }
+
         // Xác định khoảng thời gian
         let dateFilter = {};
         if (startDate && endDate) {
@@ -152,11 +188,20 @@ router.get('/summary', async (req, res) => {
             }
         };
 
-        logger.info(`Report summary generated for user: ${userId}`);
-        res.json({
+        const response = {
             success: true,
             data: result
-        });
+        };
+
+        // Cache the response for 10 minutes
+        try {
+            await redisClient.setEx(cacheKey, 600, JSON.stringify(response));
+        } catch (cacheError) {
+            logger.warn('Failed to cache reports summary:', cacheError.message);
+        }
+
+        logger.info(`Report summary generated for user: ${userId}`);
+        res.json(response);
 
     } catch (error) {
         logger.error(`Report summary error: ${error.message}`);

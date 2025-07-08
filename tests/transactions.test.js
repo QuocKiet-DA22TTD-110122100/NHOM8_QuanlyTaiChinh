@@ -1,9 +1,11 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../app');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+
+// Import app after environment setup
+let app;
 
 const MONGODB_URI = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/finance_app_test';
 
@@ -12,6 +14,9 @@ describe('Transactions API', () => {
     let userId;
 
     beforeAll(async () => {
+        // Import app after environment is set up
+        app = require('../app');
+        
         await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true

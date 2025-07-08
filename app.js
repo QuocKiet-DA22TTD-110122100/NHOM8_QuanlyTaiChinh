@@ -6,26 +6,30 @@ const { RateLimiterMemory } = require('rate-limiter-flexible');
 const swaggerJSDoc        = require('swagger-jsdoc');
 const swaggerUi          = require('swagger-ui-express');
 const redis              = require('redis');
-const authMiddleware     = require('./middleware/auth');
+const { auth: authMiddleware }     = require('./middleware/auth');
 const connectDB          = require('./config/db');       // Nếu bạn có module kết nối DB riêng
 const swaggerSpec        = require('./config/swagger'); // Nếu bạn đã tách swagger ra file config
 const logger = require('./config/logger');
 const http = require('http');
 const { Server } = require('ws');
 
+const app = express();
 const server = http.createServer(app);
 const wss = new Server({ server });
-
-const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 1. Kết nối MongoDB
-connectDB();
+// 1. Kết nối MongoDB (chỉ khi không phải test)
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
 
-// 2. Kết nối Redis
-const redisClient = redis.createClient({ url: process.env.REDIS_URL });
-redisClient.on('error', err => logger.error('Redis Error:', err));
-redisClient.connect();
+// 2. Kết nối Redis (chỉ khi không phải test)
+let redisClient;
+if (process.env.NODE_ENV !== 'test') {
+  redisClient = redis.createClient({ url: process.env.REDIS_URL });
+  redisClient.on('error', err => logger.error('Redis Error:', err));
+  redisClient.connect();
+}
 
 // 3. Cấu hình chung
 app.use(helmet());
@@ -60,12 +64,14 @@ app.use(authMiddleware);
 // 8. Route đã xác thực & cache mẫu với Redis
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/reports', async (req, res, next) => {
-  const cacheKey = `reports:${req.user.id}:${req.query.date}`;
-  try {
-    const cached = await redisClient.get(cacheKey);
-    if (cached) return res.json(JSON.parse(cached));
-  } catch (e) {
-    console.error('Cache error:', e);
+  if (redisClient) {
+    const cacheKey = `reports:${req.user.id}:${req.query.date}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
+      if (cached) return res.json(JSON.parse(cached));
+    } catch (e) {
+      logger.error('Cache error:', e);
+    }
   }
   next();
 }, require('./routes/reports'));
@@ -104,7 +110,7 @@ wss.on('connection', (ws) => {
 });
 // 10. Error handler (luôn đặt cuối)
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).json({
     success: false,
     message: 'Đã xảy ra lỗi hệ thống',

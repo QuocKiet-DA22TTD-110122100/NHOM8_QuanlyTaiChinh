@@ -7,6 +7,7 @@ let mongod;
 beforeAll(async () => {
     // Use in-memory MongoDB for tests
     mongod = await MongoMemoryServer.create();
+    process.env.MONGO_URI = mongod.getUri();
     process.env.MONGODB_TEST_URI = mongod.getUri();
     process.env.JWT_SECRET = 'test-jwt-secret';
     process.env.NODE_ENV = 'test';
