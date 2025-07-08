@@ -6,6 +6,27 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('../config/logger');
 const moment = require('moment');
+const { auth } = require('../middleware/auth');
+
+// Redis client for caching
+const redis = require('redis');
+const redisClient = redis.createClient({ 
+    url: process.env.REDIS_URL || 'redis://localhost:6379' 
+});
+redisClient.on('error', (err) => logger.error('Redis Client Error', err));
+
+// Initialize Redis connection
+(async () => {
+    try {
+        await redisClient.connect();
+        logger.info('Redis connected for transactions caching');
+    } catch (error) {
+        logger.error('Redis connection failed:', error.message);
+    }
+})();
+
+// Use auth middleware for all routes
+router.use(auth);
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
@@ -260,54 +281,111 @@ router.get('/', async (req, res) => {
         const userId = req.user.userId;
         const skip = (page - 1) * limit;
 
+        // Create cache key
+        const cacheKey = `transactions:${userId}:${page}:${limit}:${type || ''}:${category || ''}:${startDate || ''}:${endDate || ''}:${search || ''}:${sortBy}:${sortOrder}`;
+
+        try {
+            // Check cache first
+            const cachedData = await redisClient.get(cacheKey);
+            if (cachedData) {
+                logger.info(`Cache hit for transactions: ${userId}`);
+                return res.json(JSON.parse(cachedData));
+            }
+        } catch (cacheError) {
+            logger.warn('Redis cache error, proceeding without cache:', cacheError.message);
+        }
+
         // Build filter
         const filter = { userId };
         
-        if (type) filter.type = type;
-        if (category) filter.category = new RegExp(category, 'i');
+        if (type && ['income', 'expense'].includes(type)) {
+            filter.type = type;
+        }
+        
+        if (category) {
+            filter.category = new RegExp(category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        }
         
         if (startDate || endDate) {
             filter.date = {};
-            if (startDate) filter.date.$gte = new Date(startDate);
-            if (endDate) filter.date.$lte = new Date(endDate + 'T23:59:59.999Z');
+            if (startDate) {
+                const start = new Date(startDate);
+                if (!isNaN(start.getTime())) {
+                    filter.date.$gte = start;
+                }
+            }
+            if (endDate) {
+                const end = new Date(endDate + 'T23:59:59.999Z');
+                if (!isNaN(end.getTime())) {
+                    filter.date.$lte = end;
+                }
+            }
         }
         
         if (search) {
+            const searchRegex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
             filter.$or = [
-                { description: new RegExp(search, 'i') },
-                { note: new RegExp(search, 'i') },
-                { category: new RegExp(search, 'i') }
+                { description: searchRegex },
+                { note: searchRegex },
+                { category: searchRegex }
             ];
         }
 
-        // Build sort
+        // Build sort with validation
+        const allowedSortFields = ['date', 'amount', 'category', 'type', 'createdAt'];
+        const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'date';
         const sort = {};
-        sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        sort[sortField] = sortOrder === 'asc' ? 1 : -1;
+
+        // Validate and limit pagination
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.min(Math.max(1, parseInt(limit)), 100); // Max 100 items per page
+        const skipNum = (pageNum - 1) * limitNum;
 
         // Execute query
         const [transactions, total] = await Promise.all([
             Transaction.find(filter)
                 .sort(sort)
-                .skip(skip)
-                .limit(parseInt(limit))
-                .select('-attachments -__v'),
+                .skip(skipNum)
+                .limit(limitNum)
+                .select('-attachments -__v')
+                .lean(), // Use lean() for better performance
             Transaction.countDocuments(filter)
         ]);
 
-        const pages = Math.ceil(total / limit);
+        const pages = Math.ceil(total / limitNum);
 
-        logger.info(`Retrieved ${transactions.length} transactions for user: ${userId}`);
-
-        res.json({
+        const response = {
             success: true,
             data: transactions,
             pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
+                page: pageNum,
+                limit: limitNum,
                 total,
-                pages
+                pages,
+                hasNext: pageNum < pages,
+                hasPrev: pageNum > 1
+            },
+            filter: {
+                type: type || null,
+                category: category || null,
+                dateRange: {
+                    start: startDate || null,
+                    end: endDate || null
+                },
+                search: search || null
             }
-        });
+        };
+
+        // Cache the response for 5 minutes
+        try {
+            await redisClient.setEx(cacheKey, 300, JSON.stringify(response));
+        } catch (cacheError) {
+            logger.warn('Failed to cache transactions:', cacheError.message);
+        }
+
+        logger.info(`Retrieved ${transactions.length} transactions for user: ${userId}`);
+        res.json(response);
 
     } catch (error) {
         logger.error(`Get transactions error: ${error.message}`);
@@ -364,6 +442,18 @@ router.post('/', async (req, res) => {
 
         const transaction = new Transaction(transactionData);
         await transaction.save();
+
+        // Invalidate cache for this user
+        try {
+            const pattern = `transactions:${userId}:*`;
+            const keys = await redisClient.keys(pattern);
+            if (keys.length > 0) {
+                await redisClient.del(keys);
+                logger.info(`Cache invalidated for ${keys.length} keys`);
+            }
+        } catch (cacheError) {
+            logger.warn('Failed to invalidate cache:', cacheError.message);
+        }
 
         logger.info(`Transaction created: ${transaction._id} by user: ${userId}`);
 
