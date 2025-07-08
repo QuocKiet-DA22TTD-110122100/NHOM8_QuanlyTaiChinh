@@ -276,17 +276,13 @@ router.post('/login', async (req, res) => {
 
         logger.info(`User logged in: ${email}`);
         res.json({
-            success: true,
-            message: 'Đăng nhập thành công',
-            token,
-            refreshToken,
-            expiresIn: '15m',
-            refreshExpiresIn: '7d',
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name
-            }
+        success: true,
+        message: 'Đăng nhập thành công',
+        token,
+        refreshToken,
+        expiresIn: '15m',
+        refreshExpiresIn: '7d',
+        user: { id: user._id, email: user.email, name: user.name }
         });
     } catch (error) {
         logger.error(`Login error: ${error.message}`);
@@ -473,5 +469,6 @@ router.post('/logout', async (req, res) => {
         });
     }
 });
+
 
 module.exports = router;
