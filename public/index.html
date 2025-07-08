@@ -78,6 +78,9 @@
             document.getElementById('mainApp').style.display = 'block';
             document.querySelector('.auth-section').style.display = 'none';
             loadTransactions();
+        } else {
+            // Redirect to login page if no token
+            window.location.href = '/login.html';
         }
 
        // ...existing code...
@@ -193,8 +196,7 @@ async function register() {
         function logout() {
             localStorage.removeItem('token');
             token = null;
-            document.getElementById('mainApp').style.display = 'none';
-            document.querySelector('.auth-section').style.display = 'block';
+            window.location.href = '/login.html';
         }
     </script>
 </body>

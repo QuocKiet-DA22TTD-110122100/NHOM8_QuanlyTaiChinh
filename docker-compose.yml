@@ -1,4 +1,4 @@
-#version: '3.8'
+version: '3.8'
 
 services:
   backend:
@@ -6,12 +6,14 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - MONGO_URI=mongodb://admin:securepassword@mongo:27017/financeapp?authSource=admin
-      - JWT_SECRET=your_stronger_secret_key
-      - PORT=5000
-      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${PORT}
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - mongo
+      - redis
     volumes:
       - .:/app
       - /app/node_modules
@@ -21,6 +23,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - app-network
 
   mongo:
     image: mongo:6.0
@@ -31,8 +35,26 @@ services:
       - mongo-data:/data/db
     restart: unless-stopped
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=securepassword
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7.0
+    container_name: finance-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
 
 volumes:
   mongo-data:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge
