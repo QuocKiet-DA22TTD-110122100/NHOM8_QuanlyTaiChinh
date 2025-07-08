@@ -1,8 +1,12 @@
 # Sử dụng Node.js image chính thức
 FROM node:18-slim
 
+# Đặt biến môi trường
+ENV NODE_ENV=production
+
 # Tạo thư mục làm việc trong container
 WORKDIR /app
+
 
 # Sao chép package.json và cài đặt phụ thuộc
 COPY package*.json ./
