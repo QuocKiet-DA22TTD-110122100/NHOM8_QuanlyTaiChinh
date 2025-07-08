@@ -19,6 +19,10 @@ const server = http.createServer(app);
 const wss = new Server({ server });
 const PORT = process.env.PORT || 5000;
 
+server.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+});
+
 // 1. Kết nối MongoDB (chỉ khi không phải test)
 if (process.env.NODE_ENV !== 'test') {
   connectDB();
