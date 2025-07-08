@@ -76,3 +76,16 @@ npm run build
 - [ ] Xuất báo cáo PDF
 - [ ] Thêm tính năng nhắc nhở thanh toán
 - [ ] Hỗ trợ nhiều loại tiền tệ
+## Contributors
+
+- Huỳnh Quốc Kiệt - 110122106 -DA22TTD
+- Mai Hồng Lợi -110122106 - DA22TTD
+- Đặng Minh Hiếu - 110122106 -DA22TTD
+
+## Table of Contents
+
+- [Tính năng](#tính-năng)
+- [Hướng phát triển](#hướng-phát-triển)
+- [Cài đặt](#cài-đặt)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Contributors](#contributors)
