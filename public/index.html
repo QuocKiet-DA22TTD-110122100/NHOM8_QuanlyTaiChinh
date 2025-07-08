@@ -73,15 +73,14 @@
     </div>
 
     <script>
-        let token = localStorage.getItem('token');
         if(token) {
-            document.getElementById('mainApp').style.display = 'block';
-            document.querySelector('.auth-section').style.display = 'none';
-            loadTransactions();
-        } else {
-            // Redirect to login page if no token
-            window.location.href = '/login.html';
-        }
+    document.getElementById('mainApp').style.display = 'block';
+    document.querySelector('.auth-section').style.display = 'none';
+    loadTransactions();
+   } else {
+    // Redirect to login page if no token
+    window.location.href = '/login.html';
+    }
 
        // ...existing code...
 async function register() {
