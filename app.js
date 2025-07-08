@@ -42,6 +42,7 @@ app.use((req, res, next) => {
     .catch(() => res.status(429).json({ message: 'Too Many Requests' }));
 });
 
+
 // 5. Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -64,6 +65,19 @@ app.use('/api/reports', async (req, res, next) => {
   next();
 }, require('./routes/reports'));
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Kiểm tra trạng thái server
+ *     description: Trả về trạng thái hoạt động của server
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ */
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', uptime: process.uptime() });
+});
 // 9. Route tĩnh (Web UI)
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
