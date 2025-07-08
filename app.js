@@ -41,7 +41,7 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? 'https://your-frontend-domain.com'
-    : 'http://localhost:3000',
+    : 'http://localhost:5000',
   methods: ['GET','POST','PUT','DELETE'],
   allowedHeaders: ['Content-Type','Authorization']
 }));
@@ -95,6 +95,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'healthy', uptime: process.uptime() });
 });
 // 9. Route tĩnh (Web UI)
+app.use(express.static('public'));
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
