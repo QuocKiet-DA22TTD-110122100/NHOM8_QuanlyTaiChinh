@@ -60,7 +60,7 @@ npm run dev
 npm run build
 ```
 
-## Công nghệ sử dụng
+## 🛠️ Công nghệ sử dụng
 
 - React
 - Tailwind CSS
