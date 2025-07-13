@@ -69,7 +69,7 @@ npm run build
 - Vite
 - LocalStorage cho lưu trữ dữ liệu
 
-## Phát triển trong tương lai
+## Lộ trình Phát triển
 
 - [ ] Thêm xác thực người dùng
 - [ ] Tích hợp với backend (MongoDB)
