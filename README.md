@@ -78,9 +78,9 @@ npm run build
 - [ ] Hỗ trợ nhiều loại tiền tệ
 ## Contributors
 
-- Huỳnh Quốc Kiệt - 110122106 -DA22TTD
+- Huỳnh Quốc Kiệt - 110122100 -DA22TTD
 - Mai Hồng Lợi -110122106 - DA22TTD
-- Đặng Minh Hiếu - 110122106 -DA22TTD
+- Đặng Minh Hiếu - 110122075 -DA22TTD
 
 ## Table of Contents
 
