@@ -1,72 +1,34 @@
-version: '3.8'
-
 services:
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5000"  # Đổi từ 5000:5000 thành 5001:5000
     environment:
-      - MONGO_URI=${MONGO_URI}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-      - PORT=${PORT}
-      - NODE_ENV=${NODE_ENV}
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://admin:123456@mongo:27017/financeapp?authSource=admin
       - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key
+      - PORT=5000
     depends_on:
       - mongo
       - redis
-    volumes:
-      - .:/app
-      - /app/node_modules
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - app-network
 
   mongo:
     image: mongo:6.0
     container_name: finance-mongodb
     ports:
       - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    restart: unless-stopped
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
-    networks:
-      - app-network
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: 123456
 
   redis:
     image: redis:7.0-alpine
     container_name: finance-redis
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
-  mongo-data:
-  redis-data:
-
-networks:
-  app-network:
-    driver: bridge
+  mongodb_data:

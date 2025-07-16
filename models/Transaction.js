@@ -1,22 +1,24 @@
+// models/Transaction.js
 const mongoose = require('mongoose');
+const logger = require('../config/logger'); // Import logger
 
 const transactionSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true,
-    index: true // Index for faster queries
-  },
-  type: { 
-    type: String, 
-    enum: ['income', 'expense'], 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
     index: true
   },
-  amount: { 
-    type: Number, 
+  type: {
+    type: String,
+    enum: ['income', 'expense'],
     required: true,
-    min: [0, 'Số tiền phải lớn hơn 0'],
+    index: true
+  },
+  amount: {
+    type: Number,
+    required: [true, 'Số tiền là bắt buộc'],
+    min: [0.01, 'Số tiền phải lớn hơn 0'], // Changed to 0.01 for practical use
     validate: {
       validator: function(v) {
         return v > 0;
@@ -24,10 +26,11 @@ const transactionSchema = new mongoose.Schema({
       message: 'Số tiền phải lớn hơn 0'
     }
   },
-  category: { 
+  category: {
     type: String,
     trim: true,
     maxlength: [50, 'Danh mục không được quá 50 ký tự'],
+    required: [true, 'Danh mục là bắt buộc'],
     index: true
   },
   subcategory: {
@@ -35,30 +38,30 @@ const transactionSchema = new mongoose.Schema({
     trim: true,
     maxlength: [50, 'Danh mục con không được quá 50 ký tự']
   },
-  description: { 
+  description: {
     type: String,
     trim: true,
     maxlength: [500, 'Mô tả không được quá 500 ký tự']
   },
-  note: { 
+  note: {
     type: String,
     trim: true,
     maxlength: [200, 'Ghi chú không được quá 200 ký tự']
   },
-  date: { 
-    type: Date, 
+  date: {
+    type: Date,
     default: Date.now,
+    required: [true, 'Ngày giao dịch là bắt buộc'],
     index: true
   },
-  // Metadata
   tags: [{
     type: String,
     trim: true,
     maxlength: [30, 'Tag không được quá 30 ký tự']
   }],
   location: {
-    name: String,
-    address: String,
+    name: { type: String, trim: true },
+    address: { type: String, trim: true },
     coordinates: {
       lat: Number,
       lng: Number
@@ -74,7 +77,6 @@ const transactionSchema = new mongoose.Schema({
     default: 'VND',
     enum: ['VND', 'USD', 'EUR']
   },
-  // Recurring transaction
   isRecurring: {
     type: Boolean,
     default: false
@@ -82,53 +84,23 @@ const transactionSchema = new mongoose.Schema({
   recurringConfig: {
     frequency: {
       type: String,
-      enum: ['daily', 'weekly', 'monthly', 'yearly']
+      enum: ['daily', 'weekly', 'monthly', 'yearly', null] // null if not recurring
     },
     endDate: Date,
     lastGenerated: Date
   },
-  // Attachments
-  attachments: [{
-    filename: String,
-    originalName: String,
-    mimetype: String,
-    size: Number,
-    path: String,
-    uploadDate: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  // Budget tracking
   budgetId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Budget'
+    ref: 'Budget' // Assuming you'll have a Budget model
   },
-  // Status
   status: {
     type: String,
     enum: ['pending', 'completed', 'cancelled'],
     default: 'completed'
   },
-  // Audit fields
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  updatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
+  // Mongoose timestamps will handle createdAt and updatedAt
 }, {
-  timestamps: true, // Automatically handle createdAt and updatedAt
+  timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -152,77 +124,70 @@ transactionSchema.virtual('daysSinceCreation').get(function() {
   return Math.floor((Date.now() - this.createdAt) / (1000 * 60 * 60 * 24));
 });
 
-// Pre-save middleware
+// Pre-save middleware for category validation (optional, can be done in controller)
 transactionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  
-  // Validate category based on type
-  if (this.type === 'income' && this.category) {
-    const validIncomeCategories = ['salary', 'bonus', 'freelance', 'investment', 'business', 'other'];
-    if (!validIncomeCategories.includes(this.category.toLowerCase())) {
-      // Allow custom categories but log them
-      console.log(`Custom income category: ${this.category}`);
-    }
+  const validIncomeCategories = ['salary', 'bonus', 'freelance', 'investment', 'business', 'gift', 'other'];
+  const validExpenseCategories = [
+    'food', 'transport', 'housing', 'utilities', 'healthcare',
+    'entertainment', 'shopping', 'education', 'insurance', 'bills', 'personal care', 'other'
+  ];
+
+  const lowerCaseCategory = this.category.toLowerCase();
+
+  if (this.type === 'income' && !validIncomeCategories.includes(lowerCaseCategory)) {
+    logger.warn(`Custom income category used: ${this.category} by user ${this.userId}`);
+    // Optionally, you could throw an error here if you want strict validation
+    // return next(new Error(`Invalid income category: ${this.category}`));
+  } else if (this.type === 'expense' && !validExpenseCategories.includes(lowerCaseCategory)) {
+    logger.warn(`Custom expense category used: ${this.category} by user ${this.userId}`);
+    // Optionally, you could throw an error here
+    // return next(new Error(`Invalid expense category: ${this.category}`));
   }
-  
-  if (this.type === 'expense' && this.category) {
-    const validExpenseCategories = [
-      'food', 'transport', 'housing', 'utilities', 'healthcare', 
-      'entertainment', 'shopping', 'education', 'insurance', 'other'
-    ];
-    if (!validExpenseCategories.includes(this.category.toLowerCase())) {
-      console.log(`Custom expense category: ${this.category}`);
-    }
-  }
-  
   next();
 });
 
 // Static methods
-transactionSchema.statics.getMonthlyStats = function(userId, year, month) {
+transactionSchema.statics.getMonthlyStats = async function(userId, year, month) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+
   return this.aggregate([
     {
       $match: {
         userId: userId,
-        date: {
-          $gte: new Date(year, month - 1, 1),
-          $lt: new Date(year, month, 1)
-        }
+        date: { $gte: startDate, $lt: endDate }
       }
     },
     {
       $group: {
         _id: '$type',
-        total: { $sum: '$amount' },
+        totalAmount: { $sum: '$amount' },
         count: { $sum: 1 },
-        avgAmount: { $avg: '$amount' }
+        averageAmount: { $avg: '$amount' }
       }
     }
   ]);
 };
 
-transactionSchema.statics.getCategoryBreakdown = function(userId, type, startDate, endDate) {
+transactionSchema.statics.getCategoryBreakdown = async function(userId, type, startDate, endDate) {
   return this.aggregate([
     {
       $match: {
         userId: userId,
         type: type,
-        date: {
-          $gte: startDate,
-          $lte: endDate
-        }
+        date: { $gte: startDate, $lte: endDate }
       }
     },
     {
       $group: {
         _id: '$category',
-        total: { $sum: '$amount' },
+        totalAmount: { $sum: '$amount' },
         count: { $sum: 1 },
-        transactions: { $push: '$$ROOT' }
+        // transactions: { $push: '$$ROOT' } // Can be heavy for large datasets
       }
     },
     {
-      $sort: { total: -1 }
+      $sort: { totalAmount: -1 }
     }
   ]);
 };
@@ -239,7 +204,8 @@ transactionSchema.methods.duplicate = function() {
     note: `Copy of: ${this.note || ''}`.trim(),
     paymentMethod: this.paymentMethod,
     currency: this.currency,
-    tags: [...this.tags]
+    tags: [...this.tags],
+    date: new Date() // Set current date for duplicated transaction
   });
   return duplicate;
 };
@@ -247,8 +213,9 @@ transactionSchema.methods.duplicate = function() {
 transactionSchema.methods.toSafeObject = function() {
   const obj = this.toObject();
   delete obj.__v;
-  delete obj.updatedBy;
-  delete obj.createdBy;
+  // You might want to keep createdBy/updatedBy for audit logs
+  // delete obj.updatedBy;
+  // delete obj.createdBy;
   return obj;
 };
 

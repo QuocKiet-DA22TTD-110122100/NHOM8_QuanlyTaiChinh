@@ -1,517 +1,231 @@
 const express = require('express');
-const router = express.Router();
 const Transaction = require('../models/Transaction');
-const logger = require('../config/logger');
-const moment = require('moment');
-const { auth } = require('../middleware/auth');
-const { PDFDocument, rgb } = require('pdf-lib');
+const Category = require('../models/Category');
+const auth = require('../middleware/auth');
+const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 
-// Redis client for caching
-const redis = require('redis');
-const redisClient = redis.createClient({ 
-    url: process.env.REDIS_URL || 'redis://localhost:6379' 
-});
-redisClient.on('error', (err) => logger.error('Redis Client Error', err));
+const router = express.Router();
 
-// Initialize Redis connection
-(async () => {
-    try {
-        await redisClient.connect();
-        logger.info('Redis connected for reports caching');
-    } catch (error) {
-        logger.warn('Redis connection failed, proceeding without cache:', error.message);
-    }
-})();
+// Get monthly report
+router.get('/monthly', auth, async (req, res) => {
+  try {
+    const { year = new Date().getFullYear(), month = new Date().getMonth() + 1 } = req.query;
+    
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
 
-// Use auth middleware for all routes
-router.use(auth);
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     ReportSummary:
- *       type: object
- *       properties:
- *         totalIncome:
- *           type: number
- *         totalExpense:
- *           type: number
- *         balance:
- *           type: number
- *         transactionCount:
- *           type: number
- *         period:
- *           type: string
- *     CategoryReport:
- *       type: object
- *       properties:
- *         category:
- *           type: string
- *         amount:
- *           type: number
- *         count:
- *           type: number
- *         percentage:
- *           type: number
- */
-
-/**
- * @swagger
- * /api/reports/summary:
- *   get:
- *     summary: Lấy báo cáo tổng quan
- *     tags: [Reports]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: period
- *         schema:
- *           type: string
- *           enum: [week, month, quarter, year]
- *         description: Khoảng thời gian báo cáo
- *       - in: query
- *         name: startDate
- *         schema:
- *           type: string
- *           format: date
- *         description: Ngày bắt đầu (YYYY-MM-DD)
- *       - in: query
- *         name: endDate
- *         schema:
- *           type: string
- *           format: date
- *         description: Ngày kết thúc (YYYY-MM-DD)
- *     responses:
- *       200:
- *         description: Báo cáo tổng quan thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   $ref: '#/components/schemas/ReportSummary'
- */
-router.get('/summary', async (req, res) => {
-    try {
-        const { period = 'month', startDate, endDate } = req.query;
-        const userId = req.user.userId;
-
-        // Create cache key
-        const cacheKey = `reports:summary:${userId}:${period}:${startDate || ''}:${endDate || ''}`;
-
-        try {
-            // Check cache first
-            const cachedData = await redisClient.get(cacheKey);
-            if (cachedData) {
-                logger.info(`Cache hit for reports summary: ${userId}`);
-                return res.json(JSON.parse(cachedData));
-            }
-        } catch (cacheError) {
-            logger.warn('Redis cache error, proceeding without cache:', cacheError.message);
+    const report = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          date: { $gte: startDate, $lte: endDate }
         }
-
-        // Xác định khoảng thời gian
-        let dateFilter = {};
-        if (startDate && endDate) {
-            dateFilter = {
-                date: {
-                    $gte: new Date(startDate),
-                    $lte: new Date(endDate + 'T23:59:59.999Z')
-                }
-            };
-        } else {
-            const now = moment();
-            let start, end;
-            
-            switch (period) {
-                case 'week':
-                    start = now.clone().startOf('week');
-                    end = now.clone().endOf('week');
-                    break;
-                case 'quarter':
-                    start = now.clone().startOf('quarter');
-                    end = now.clone().endOf('quarter');
-                    break;
-                case 'year':
-                    start = now.clone().startOf('year');
-                    end = now.clone().endOf('year');
-                    break;
-                default: // month
-                    start = now.clone().startOf('month');
-                    end = now.clone().endOf('month');
-            }
-            
-            dateFilter = {
-                date: {
-                    $gte: start.toDate(),
-                    $lte: end.toDate()
-                }
-            };
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'categoryInfo'
         }
-
-        // Aggregate data
-        const summary = await Transaction.aggregate([
-            {
-                $match: {
-                    userId: userId,
-                    ...dateFilter
-                }
-            },
-            {
-                $group: {
-                    _id: '$type',
-                    total: { $sum: '$amount' },
-                    count: { $sum: 1 }
-                }
-            }
-        ]);
-
-        const totalIncome = summary.find(s => s._id === 'income')?.total || 0;
-        const totalExpense = summary.find(s => s._id === 'expense')?.total || 0;
-        const incomeCount = summary.find(s => s._id === 'income')?.count || 0;
-        const expenseCount = summary.find(s => s._id === 'expense')?.count || 0;
-
-        const result = {
-            totalIncome,
-            totalExpense,
-            balance: totalIncome - totalExpense,
-            transactionCount: incomeCount + expenseCount,
-            period: period,
-            dateRange: {
-                start: dateFilter.date?.$gte,
-                end: dateFilter.date?.$lte
-            }
-        };
-
-        const response = {
-            success: true,
-            data: result
-        };
-
-        // Cache the response for 10 minutes
-        try {
-            await redisClient.setEx(cacheKey, 600, JSON.stringify(response));
-        } catch (cacheError) {
-            logger.warn('Failed to cache reports summary:', cacheError.message);
+      },
+      {
+        $group: {
+          _id: {
+            type: '$type',
+            category: '$category',
+            categoryName: { $arrayElemAt: ['$categoryInfo.name', 0] }
+          },
+          total: { $sum: '$amount' },
+          count: { $sum: 1 },
+          transactions: { $push: '$$ROOT' }
         }
+      },
+      {
+        $group: {
+          _id: '$_id.type',
+          categories: {
+            $push: {
+              category: '$_id.category',
+              name: '$_id.categoryName',
+              total: '$total',
+              count: '$count'
+            }
+          },
+          totalAmount: { $sum: '$total' }
+        }
+      }
+    ]);
 
-        logger.info(`Report summary generated for user: ${userId}`);
-        res.json(response);
-
-    } catch (error) {
-        logger.error(`Report summary error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi tạo báo cáo tổng quan'
-        });
-    }
+    res.json({
+      success: true,
+      data: {
+        period: { year, month },
+        report
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server' 
+    });
+  }
 });
 
-/**
- * @swagger
- * /api/reports/categories:
- *   get:
- *     summary: Báo cáo theo danh mục
- *     tags: [Reports]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: type
- *         schema:
- *           type: string
- *           enum: [income, expense]
- *         description: Loại giao dịch
- *       - in: query
- *         name: period
- *         schema:
- *           type: string
- *           enum: [week, month, quarter, year]
- *         description: Khoảng thời gian
- *     responses:
- *       200:
- *         description: Báo cáo danh mục thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/CategoryReport'
- */
-router.get('/categories', async (req, res) => {
-    try {
-        const { type = 'expense', period = 'month' } = req.query;
-        const userId = req.user.userId;
+// Get yearly report
+router.get('/yearly', auth, async (req, res) => {
+  try {
+    const { year = new Date().getFullYear() } = req.query;
+    
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
 
-        // Xác định khoảng thời gian (tương tự như summary)
-        const now = moment();
-        let start, end;
-        
-        switch (period) {
-            case 'week':
-                start = now.clone().startOf('week');
-                end = now.clone().endOf('week');
-                break;
-            case 'quarter':
-                start = now.clone().startOf('quarter');
-                end = now.clone().endOf('quarter');
-                break;
-            case 'year':
-                start = now.clone().startOf('year');
-                end = now.clone().endOf('year');
-                break;
-            default: // month
-                start = now.clone().startOf('month');
-                end = now.clone().endOf('month');
+    const report = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          date: { $gte: startDate, $lte: endDate }
         }
-
-        const categories = await Transaction.aggregate([
-            {
-                $match: {
-                    userId: userId,
-                    type: type,
-                    date: {
-                        $gte: start.toDate(),
-                        $lte: end.toDate()
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: '$category',
-                    amount: { $sum: '$amount' },
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { amount: -1 }
+      },
+      {
+        $group: {
+          _id: {
+            type: '$type',
+            month: { $month: '$date' }
+          },
+          total: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id.type',
+          months: {
+            $push: {
+              month: '$_id.month',
+              total: '$total',
+              count: '$count'
             }
-        ]);
+          },
+          totalAmount: { $sum: '$total' }
+        }
+      }
+    ]);
 
-        // Tính phần trăm
-        const totalAmount = categories.reduce((sum, cat) => sum + cat.amount, 0);
-        const result = categories.map(cat => ({
-            category: cat._id || 'Không phân loại',
-            amount: cat.amount,
-            count: cat.count,
-            percentage: totalAmount > 0 ? (cat.amount / totalAmount * 100).toFixed(2) : 0
-        }));
-
-        res.json({
-            success: true,
-            data: result
-        });
-
-    } catch (error) {
-        logger.error(`Categories report error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi tạo báo cáo danh mục'
-        });
-    }
+    res.json({
+      success: true,
+      data: {
+        year,
+        report
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server' 
+    });
+  }
 });
 
-/**
- * @swagger
- * /api/reports/trends:
- *   get:
- *     summary: Báo cáo xu hướng theo thời gian
- *     tags: [Reports]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: period
- *         schema:
- *           type: string
- *           enum: [daily, weekly, monthly]
- *         description: Khoảng thời gian nhóm dữ liệu
- *       - in: query
- *         name: months
- *         schema:
- *           type: number
- *           default: 6
- *         description: Số tháng lùi lại
- *     responses:
- *       200:
- *         description: Báo cáo xu hướng thành công
- */
-router.get('/trends', async (req, res) => {
-    try {
-        const { period = 'monthly', months = 6 } = req.query;
-        const userId = req.user.userId;
-
-        const startDate = moment().subtract(months, 'months').startOf('month').toDate();
-        const endDate = moment().endOf('month').toDate();
-
-        let groupBy = {};
-        switch (period) {
-            case 'daily':
-                groupBy = {
-                    year: { $year: '$date' },
-                    month: { $month: '$date' },
-                    day: { $dayOfMonth: '$date' }
-                };
-                break;
-            case 'weekly':
-                groupBy = {
-                    year: { $year: '$date' },
-                    week: { $week: '$date' }
-                };
-                break;
-            default: // monthly
-                groupBy = {
-                    year: { $year: '$date' },
-                    month: { $month: '$date' }
-                };
-        }
-
-        const trends = await Transaction.aggregate([
-            {
-                $match: {
-                    userId: userId,
-                    date: {
-                        $gte: startDate,
-                        $lte: endDate
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        ...groupBy,
-                        type: '$type'
-                    },
-                    amount: { $sum: '$amount' },
-                    count: { $sum: 1 }
-                }
-            },
-            {
-                $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1, '_id.week': 1 }
-            }
-        ]);
-
-        res.json({
-            success: true,
-            data: trends
-        });
-
-    } catch (error) {
-        logger.error(`Trends report error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi tạo báo cáo xu hướng'
-        });
+// Export to Excel
+router.get('/export/excel', auth, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query = { user: req.user._id };
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
     }
+
+    const transactions = await Transaction.find(query)
+      .populate('category', 'name')
+      .sort({ date: -1 });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Transactions');
+
+    worksheet.columns = [
+      { header: 'Ngày', key: 'date', width: 15 },
+      { header: 'Loại', key: 'type', width: 10 },
+      { header: 'Số tiền', key: 'amount', width: 15 },
+      { header: 'Danh mục', key: 'category', width: 20 },
+      { header: 'Mô tả', key: 'description', width: 30 },
+      { header: 'Tags', key: 'tags', width: 20 }
+    ];
+
+    transactions.forEach(transaction => {
+      worksheet.addRow({
+        date: transaction.date.toLocaleDateString('vi-VN'),
+        type: transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
+        amount: transaction.amount,
+        category: transaction.category?.name || '',
+        description: transaction.description || '',
+        tags: transaction.tags.join(', ')
+      });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=transactions.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server' 
+    });
+  }
 });
 
-/**
- * @swagger
- * /api/reports/export:
- *   get:
- *     summary: Xuất báo cáo Excel
- *     tags: [Reports]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: format
- *         schema:
- *           type: string
- *           enum: [excel, pdf]
- *         description: Định dạng xuất
- *       - in: query
- *         name: startDate
- *         schema:
- *           type: string
- *           format: date
- *       - in: query
- *         name: endDate
- *         schema:
- *           type: string
- *           format: date
- *     responses:
- *       200:
- *         description: File báo cáo
- *         content:
- *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
- *             schema:
- *               type: string
- *               format: binary
- */
-router.get('/export', async (req, res) => {
-    try {
-        const { format = 'excel', startDate, endDate } = req.query;
-        const userId = req.user.userId;
-
-        // Lấy dữ liệu giao dịch
-        const dateFilter = {};
-        if (startDate && endDate) {
-            dateFilter.date = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate + 'T23:59:59.999Z')
-            };
-        }
-
-        const transactions = await Transaction.find({
-            userId: userId,
-            ...dateFilter
-        }).sort({ date: -1 });
-
-        if (format === 'excel') {
-            const ExcelJS = require('exceljs');
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Transactions');
-
-            // Header
-            worksheet.columns = [
-                { header: 'Ngày', key: 'date', width: 15 },
-                { header: 'Loại', key: 'type', width: 10 },
-                { header: 'Số tiền', key: 'amount', width: 15 },
-                { header: 'Danh mục', key: 'category', width: 20 },
-                { header: 'Ghi chú', key: 'note', width: 30 }
-            ];
-
-            // Data
-            transactions.forEach(transaction => {
-                worksheet.addRow({
-                    date: moment(transaction.date).format('DD/MM/YYYY'),
-                    type: transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
-                    amount: transaction.amount,
-                    category: transaction.category || '',
-                    note: transaction.note || ''
-                });
-            });
-
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', `attachment; filename=transactions_${moment().format('YYYYMMDD')}.xlsx`);
-
-            await workbook.xlsx.write(res);
-            res.end();
-        } else {
-            res.status(400).json({
-                success: false,
-                message: 'Định dạng không được hỗ trợ'
-            });
-        }
-
-    } catch (error) {
-        logger.error(`Export report error: ${error.message}`);
-        res.status(500).json({
-            success: false,
-            message: 'Lỗi xuất báo cáo'
-        });
+// Export to PDF
+router.get('/export/pdf', auth, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const query = { user: req.user._id };
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
     }
+
+    const transactions = await Transaction.find(query)
+      .populate('category', 'name')
+      .sort({ date: -1 });
+
+    const doc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=transactions.pdf');
+
+    doc.pipe(res);
+
+    doc.fontSize(20).text('Báo cáo giao dịch', 100, 100);
+    doc.fontSize(12);
+
+    let y = 150;
+    transactions.forEach(transaction => {
+      doc.text(`${transaction.date.toLocaleDateString('vi-VN')} - ${transaction.type === 'income' ? 'Thu' : 'Chi'}: ${transaction.amount.toLocaleString()} VND`, 100, y);
+      doc.text(`Danh mục: ${transaction.category?.name || ''} - ${transaction.description || ''}`, 100, y + 15);
+      y += 40;
+      
+      if (y > 700) {
+        doc.addPage();
+        y = 100;
+      }
+    });
+
+    doc.end();
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server' 
+    });
+  }
 });
 
 module.exports = router;
+
+

@@ -74,42 +74,41 @@
 
     <script>
         let token = localStorage.getItem('token');
-        if(token) {
-            document.getElementById('mainApp').style.display = 'block';
-            document.querySelector('.auth-section').style.display = 'none';
-            loadTransactions();
-        } else {
-            // Redirect to login page if no token
-            window.location.href = '/login.html';
+if(token) {
+    document.getElementById('mainApp').style.display = 'block';
+    document.querySelector('.auth-section').style.display = 'none';
+    loadTransactions();
+} else {
+    document.getElementById('mainApp').style.display = 'none';
+    document.querySelector('.auth-section').style.display = 'block';
+}
+
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email, password, name})
+                });
+                const data = await response.json();
+                if(data.success) {
+                    alert('Đăng ký thành công! Vui lòng đăng nhập.');
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Đăng ký thất bại'));
+                }
+            } catch(err) {
+                alert('Lỗi kết nối: ' + err.message);
+            }
         }
 
-       // ...existing code...
-async function register() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const name = document.getElementById('name').value;
-    
-    try {
-        const response = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email, password, username: name}) // Sửa ở đây
-        });
-        const data = await response.json();
-        if(data.success) {
-            alert('Đăng ký thành công! Vui lòng đăng nhập.');
-        } else {
-            alert('Lỗi: ' + data.message);
-        }
-    } catch(err) {
-        alert('Lỗi kết nối: ' + err.message);
-    }
-}
-// ...existing code...
         async function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
+
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
@@ -118,13 +117,13 @@ async function register() {
                 });
                 const data = await response.json();
                 if(data.success) {
-                    token = data.token;
-                    localStorage.setItem('token', token);
+                    localStorage.setItem('token', data.token);
+                    token = data.token; // Cập nhật lại biến token
                     document.getElementById('mainApp').style.display = 'block';
                     document.querySelector('.auth-section').style.display = 'none';
                     loadTransactions();
                 } else {
-                    alert('Lỗi: ' + data.message);
+                    alert('Lỗi: ' + (data.message || 'Đăng nhập thất bại'));
                 }
             } catch(err) {
                 alert('Lỗi kết nối: ' + err.message);
@@ -132,8 +131,6 @@ async function register() {
         }
 
         async function addTransaction() {
-            const type = document.getElementById('type').value;
-            const amount = document.getElementById('amount').value;
             const description = document.getElementById('description').value;
             const category = document.getElementById('category').value;
             
@@ -142,9 +139,9 @@ async function register() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
                     },
-                    body: JSON.stringify({type, amount, description, category})
+                    body: JSON.stringify({ description, category })
                 });
                 const data = await response.json();
                 if(data.success) {
@@ -164,7 +161,7 @@ async function register() {
         async function loadTransactions() {
             try {
                 const response = await fetch('/api/transactions', {
-                    headers: {'Authorization': 'Bearer ' + token}
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
                 });
                 const data = await response.json();
                 if(data.success) {
@@ -196,7 +193,8 @@ async function register() {
         function logout() {
             localStorage.removeItem('token');
             token = null;
-            window.location.href = '/login.html';
+            document.getElementById('mainApp').style.display = 'none';
+            document.querySelector('.auth-section').style.display = 'block';
         }
     </script>
 </body>
