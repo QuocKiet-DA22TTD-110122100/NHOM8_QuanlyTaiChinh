@@ -2,7 +2,26 @@
 Xây Dựng Web Quản Lý Tài Chính  NEXT.JS
 # Ứng dụng Quản lý Tài chính Cá nhân
 
-Ứng dụng web giúp quản lý thu chi và ngân sách cá nhân, được xây dựng bằng React và Tailwind CSS.
+## Cấu trúc dự án
+
+- `backend/` - Node.js API server
+- `frontend/` - React frontend application
+
+## Nhánh phát triển
+
+- `main` - Nhánh chính
+- `backend` - Phát triển backend
+- `frontend` - Phát triển frontend
+
+## Chạy ứng dụng
+
+```bash
+# Chạy toàn bộ ứng dụng
+docker-compose up -d
+
+# Backend: http://localhost:5001
+# Frontend: http://localhost:3000
+```
 
 ## Tính năng
 

@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
@@ -133,5 +134,30 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
+// Verify token route
+router.get('/verify', auth, async (req, res) => {
+  try {
+    res.json({
+      success: true,
+      message: 'Token hợp lệ',
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+  }
+});
+
 module.exports = router;
+
+
+
+
 

@@ -2,16 +2,28 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const http = require('http');
+
+// Import services
+const redisService = require('./config/redis');
+const websocketService = require('./services/websocket');
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Redis
+redisService.connect();
+
+// Initialize WebSocket
+websocketService.initialize(server);
 
 // Security Middleware
 app.use(helmet());
 
 // Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
 app.use('/api/', limiter);
 
@@ -25,7 +37,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static files for uploaded images
+// Static files
 app.use('/uploads', express.static('uploads'));
 
 // Routes
@@ -37,13 +49,25 @@ app.use('/api/v1/notifications', require('./routes/notifications'));
 app.use('/api/v1/upload', require('./routes/upload'));
 app.use('/api/v1/bank-accounts', require('./routes/bankAccounts'));
 app.use('/api/v1/goals', require('./routes/goals'));
+app.use('/api/v1/webhooks', require('./routes/webhooks')); // New webhook routes
 
 // Health Check
 app.get('/api/v1/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     uptime: process.uptime(),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    redis: redisService.isConnected,
+    websocket: websocketService.wss ? 'active' : 'inactive'
+  });
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Finance App API Server',
+    version: '1.0.0',
+    status: 'running'
   });
 });
 
@@ -64,6 +88,6 @@ app.use('*', (req, res) => {
   });
 });
 
-module.exports = app;
+module.exports = { app, server };
 
 

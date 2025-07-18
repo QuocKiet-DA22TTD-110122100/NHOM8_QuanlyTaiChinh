@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5001:5000"  # Đổi từ 5000:5000 thành 5001:5000
+      - "5001:5000"  # Đảm bảo port mapping đúng
     environment:
       - NODE_ENV=development
       - MONGO_URI=mongodb://admin:123456@mongo:27017/financeapp?authSource=admin
@@ -15,20 +15,29 @@ services:
       - mongo
       - redis
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
   mongo:
     image: mongo:6.0
-    container_name: finance-mongodb
+    container_name: mongo
     ports:
-      - "27017:27017"
+      - "27018:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: 123456
 
   redis:
     image: redis:7.0-alpine
-    container_name: finance-redis
+    container_name: redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
 
 volumes:
   mongodb_data:

@@ -89,7 +89,7 @@ if(token) {
             const name = document.getElementById('name').value;
 
             try {
-                const response = await fetch('/api/auth/register', {
+                const response = await fetch('/api/v1/auth/register', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({email, password, name})
@@ -110,7 +110,7 @@ if(token) {
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/api/auth/login', {
+                const response = await fetch('/api/v1/auth/login', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({email, password})
@@ -131,17 +131,19 @@ if(token) {
         }
 
         async function addTransaction() {
+            const type = document.getElementById('type').value;
+            const amount = parseFloat(document.getElementById('amount').value);
             const description = document.getElementById('description').value;
             const category = document.getElementById('category').value;
             
             try {
-                const response = await fetch('/api/transactions', {
+                const response = await fetch('/api/v1/transactions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + localStorage.getItem('token')
                     },
-                    body: JSON.stringify({ description, category })
+                    body: JSON.stringify({ type, amount, description, category })
                 });
                 const data = await response.json();
                 if(data.success) {
@@ -160,7 +162,7 @@ if(token) {
 
         async function loadTransactions() {
             try {
-                const response = await fetch('/api/transactions', {
+                const response = await fetch('/api/v1/transactions', {
                     headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
                 });
                 const data = await response.json();
@@ -199,3 +201,4 @@ if(token) {
     </script>
 </body>
 </html>
+
