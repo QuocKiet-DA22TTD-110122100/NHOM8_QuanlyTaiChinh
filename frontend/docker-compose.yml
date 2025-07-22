@@ -1,0 +1,59 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - finance-network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ..  # Build từ thư mục root
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"  # Backend chạy trên port 5001
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://admin:123456@mongo:27017/financeapp?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key
+      - PORT=5000
+    networks:
+      - finance-network
+    depends_on:
+      - mongo
+      - redis
+
+  mongo:
+    image: mongo:6.0
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - finance-network
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6380:6379"
+    networks:
+      - finance-network
+
+volumes:
+  mongo_data:
+
+networks:
+  finance-network:
+    driver: bridge
+
+

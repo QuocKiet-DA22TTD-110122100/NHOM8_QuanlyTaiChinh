@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Quản lý tài chính</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #3730a3;
+            --secondary-color: #f1f5f9;
+            --text-color: #334155;
+            --border-color: #e2e8f0;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            min-height: 500px;
+        }
+
+        .login-form {
+            flex: 1;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-image {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="500" cy="500" r="300" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="500" cy="500" r="200" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>');
+            background-size: cover;
+            opacity: 0.3;
+        }
+
+        .login-image-content {
+            text-align: center;
+            z-index: 1;
+            position: relative;
+        }
+
+        .login-image-content i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-image-content h3 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .login-image-content p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .brand-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .brand-logo h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .brand-logo p {
+            color: #64748b;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .form-floating {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-floating input {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-floating input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-floating label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .auth-toggle a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .auth-toggle a:hover {
+            color: var(--primary-dark);
+        }
+
+        .loading-spinner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+        }
+
+        .loading-spinner.show {
+            display: flex;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .form-floating {
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                flex-direction: column;
+                margin: 1rem;
+                max-width: 100%;
+            }
+
+            .login-image {
+                min-height: 200px;
+            }
+
+            .login-form {
+                padding: 2rem;
+            }
+
+            .brand-logo h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="brand-logo">
+                <h1><i class="fas fa-wallet"></i> Finance App</h1>
+                <p>Quản lý tài chính thông minh</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="authForm">
+                <div class="form-floating">
+                    <input type="email" class="form-control" id="email" placeholder="Email" required>
+                    <label for="email">Email</label>
+                </div>
+
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" placeholder="Mật khẩu" required>
+                    <label for="password">Mật khẩu</label>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="password-eye"></i>
+                    </button>
+                </div>
+
+                <div class="form-floating" id="name-group" style="display: none;">
+                    <input type="text" class="form-control" id="name" placeholder="Họ tên">
+                    <label for="name">Họ tên</label>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary" id="primary-btn">
+                        <span class="loading-spinner" id="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                        <span id="btn-text">Đăng nhập</span>
+                    </button>
+                </div>
+
+                <div class="auth-toggle">
+                    <p id="toggle-text">Chưa có tài khoản? <a href="#" onclick="toggleAuthMode()">Đăng ký ngay</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="login-image">
+            <div class="login-image-content">
+                <i class="fas fa-chart-line"></i>
+                <h3>Quản lý tài chính</h3>
+                <p>Theo dõi thu chi một cách thông minh và hiệu quả. Kiểm soát tài chính cá nhân của bạn ngay hôm nay!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let isLoginMode = true;
+
+        // Kiểm tra token đã tồn tại
+        if (localStorage.getItem('token')) {
+            window.location.href = '/';
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            const nameGroup = document.getElementById('name-group');
+            const btnText = document.getElementById('btn-text');
+            const toggleText = document.getElementById('toggle-text');
+
+            if (isLoginMode) {
+                nameGroup.style.display = 'none';
+                btnText.textContent = 'Đăng nhập';
+                toggleText.innerHTML = 'Chưa có tài khoản? <a href="#" onclick="toggleAuthMode()">Đăng ký ngay</a>';
+            } else {
+                nameGroup.style.display = 'block';
+                btnText.textContent = 'Đăng ký';
+                toggleText.innerHTML = 'Đã có tài khoản? <a href="#" onclick="toggleAuthMode()">Đăng nhập</a>';
+            }
+
+            clearAlert();
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('password-eye');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'fas fa-eye';
+            }
+        }
+
+        function showAlert(message, type = 'danger') {
+            const alertContainer = document.getElementById('alert-container');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    ${message}
+                </div>
+            `;
+        }
+
+        function clearAlert() {
+            document.getElementById('alert-container').innerHTML = '';
+        }
+
+        function setLoading(loading) {
+            const spinner = document.getElementById('loading-spinner');
+            const btn = document.getElementById('primary-btn');
+            
+            if (loading) {
+                spinner.classList.add('show');
+                btn.disabled = true;
+            } else {
+                spinner.classList.remove('show');
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+
+            if (!email || !password) {
+                showAlert('Vui lòng nhập đầy đủ thông tin');
+                return;
+            }
+
+            if (!isLoginMode && !name) {
+                showAlert('Vui lòng nhập họ tên');
+                return;
+            }
+
+            setLoading(true);
+            clearAlert();
+
+            try {
+                const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+                const body = isLoginMode ? { email, password } : { email, password, name };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (isLoginMode) {
+                        localStorage.setItem('token', data.token);
+                        showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    } else {
+                        showAlert('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+                        document.getElementById('name').value = '';
+                        toggleAuthMode();
+                    }
+                } else {
+                    showAlert(data.message || 'Có lỗi xảy ra');
+                }
+            } catch (error) {
+                showAlert('Lỗi kết nối. Vui lòng thử lại.');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Validation real-time
+        document.getElementById('email').addEventListener('input', function() {
+            const email = this.value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (email && !emailRegex.test(email)) {
+                this.style.borderColor = 'var(--error-color)';
+            } else {
+                this.style.borderColor = 'var(--border-color)';
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            
+            if (password && password.length < 6) {
+                this.style.borderColor = 'var(--error-color)';
+            } else {
+                this.style.borderColor = 'var(--border-color)';
+            }
+        });
+    </script>
+</body>
+</html>
