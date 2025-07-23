@@ -170,4 +170,4 @@ npm run build
 - [ ] Phát triển phiên bản mobile 
 - [ ] Tích hợp biểu đồ nâng cao
 - [ ] Tích hợp AI dự đoán chi tiêu
-
+- [ ] Hỗ trợ chia sẻ dữ liệu
