@@ -9,6 +9,7 @@ import {
   EyeIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
+import { reportsAPI, unifiedAPI } from '../services/api';
 
 function Dashboard() {
   const [summary, setSummary] = useState({
@@ -18,62 +19,190 @@ function Dashboard() {
     monthlyGrowth: 0,
     transactionCount: 0
   });
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
+  const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [animateCards, setAnimateCards] = useState(false);
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      setLoading(false);
-      setAnimateCards(true);
-    }, 500);
-
-    // Lấy dữ liệu từ localStorage
-    const incomes = JSON.parse(localStorage.getItem('incomes')) || [];
-    const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-
-    const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
-    const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
-    const balance = totalIncome - totalExpense;
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Lấy dữ liệu giao dịch
+        const transactions = await unifiedAPI.getTransactions();
+        
+        // Tính toán tổng thu nhập và chi tiêu
+        const incomeTransactions = transactions.filter(t => t.type === 'income');
+        const expenseTransactions = transactions.filter(t => t.type === 'expense');
+        
+        const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+        const balance = totalIncome - totalExpense;
+        
+        // Tính tăng trưởng theo tháng (so với tháng trước)
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        
+        const currentMonthTransactions = transactions.filter(t => {
+          const date = new Date(t.date);
+          return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+        
+        const lastMonthTransactions = transactions.filter(t => {
+          const date = new Date(t.date);
+          return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
+        });
+        
+        const currentMonthBalance = currentMonthTransactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0) - 
+          currentMonthTransactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+          
+        const lastMonthBalance = lastMonthTransactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0) - 
+          lastMonthTransactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+          
+        const monthlyGrowth = lastMonthBalance !== 0 
+          ? ((currentMonthBalance - lastMonthBalance) / Math.abs(lastMonthBalance)) * 100
+          : currentMonthBalance > 0 ? 100 : 0;
+        
+        setSummary({
+          totalIncome,
+          totalExpense,
+          balance,
+          monthlyGrowth: parseFloat(monthlyGrowth.toFixed(1)),
+          transactionCount: transactions.length
+        });
+        
+        // Tạo dữ liệu biểu đồ theo tháng (6 tháng gần nhất)
+        const monthlyChartData = [];
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const month = date.getMonth();
+          const year = date.getFullYear();
+          
+          const monthTransactions = transactions.filter(t => {
+            const tDate = new Date(t.date);
+            return tDate.getMonth() === month && tDate.getFullYear() === year;
+          });
+          
+          const income = monthTransactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+          const expense = monthTransactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+          
+          monthlyChartData.push({
+            name: `T${month + 1}`,
+            income,
+            expense
+          });
+        }
+        setMonthlyData(monthlyChartData);
+        
+        // Tạo dữ liệu phân bổ chi tiêu theo danh mục
+        // Bản đồ chuyển mã danh mục sang nhãn tiếng Việt
+        const labelMap = {
+          food: 'Ăn uống',
+          transport: 'Di chuyển',
+          utilities: 'Hóa đơn & Tiện ích',
+          entertainment: 'Giải trí',
+          shopping: 'Mua sắm',
+          health: 'Sức khỏe',
+          education: 'Giáo dục',
+          other: 'Khác'
+        };
+        // Gom nhóm chi tiêu theo danh mục
+        const categoryExpenses = {};
+        expenseTransactions.forEach(t => {
+          // `t.category` có thể là chuỗi (giá trị danh mục) hoặc object
+          const categoryName = (typeof t.category === 'string' && t.category)
+            || t.category?.name
+            || t.categoryName
+            || 'Khác';
+          const displayName = labelMap[(categoryName || '').toLowerCase()] || categoryName;
+          categoryExpenses[displayName] = (categoryExpenses[displayName] || 0) + t.amount;
+        });
+        
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+        const categoryData = Object.entries(categoryExpenses)
+          .map(([name, value], index) => ({
+            name,
+            value,
+            color: colors[index % colors.length]
+          }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 7); // Lấy top 7 danh mục
+          
+        setExpenseCategories(categoryData);
+        
+        // Tạo dữ liệu xu hướng số dư (6 tháng gần nhất)
+        const trendChartData = [];
+        let runningBalance = 0;
+        
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          const month = date.getMonth();
+          const year = date.getFullYear();
+          
+          const monthTransactions = transactions.filter(t => {
+            const tDate = new Date(t.date);
+            return tDate.getMonth() === month && tDate.getFullYear() === year;
+          });
+          
+          const monthIncome = monthTransactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+          const monthExpense = monthTransactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+          
+          runningBalance += (monthIncome - monthExpense);
+          
+          trendChartData.push({
+            name: `T${month + 1}`,
+            balance: runningBalance
+          });
+        }
+        setTrendData(trendChartData);
+        
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu dashboard:', error);
+        // Fallback to empty data
+        setSummary({
+          totalIncome: 0,
+          totalExpense: 0,
+          balance: 0,
+          monthlyGrowth: 0,
+          transactionCount: 0
+        });
+        setMonthlyData([]);
+        setExpenseCategories([]);
+        setTrendData([]);
+      } finally {
+        setLoading(false);
+        setTimeout(() => setAnimateCards(true), 100);
+      }
+    };
     
-    // Calculate monthly growth (mock data)
-    const monthlyGrowth = balance > 0 ? 12.5 : -5.2;
-    const transactionCount = incomes.length + expenses.length;
-
-    setSummary({
-      totalIncome,
-      totalExpense,
-      balance,
-      monthlyGrowth,
-      transactionCount
-    });
+    fetchDashboardData();
   }, []);
 
-  const monthlyData = [
-    { name: 'T1', income: 5000000, expense: 3000000 },
-    { name: 'T2', income: 6000000, expense: 4000000 },
-    { name: 'T3', income: 4500000, expense: 3500000 },
-    { name: 'T4', income: 7000000, expense: 5000000 },
-    { name: 'T5', income: 5500000, expense: 4200000 },
-    { name: 'T6', income: 6800000, expense: 3800000 },
-  ];
 
-  const expenseCategories = [
-    { name: 'Ăn uống', value: 2500000, color: '#FF6B6B' },
-    { name: 'Di chuyển', value: 1200000, color: '#4ECDC4' },
-    { name: 'Mua sắm', value: 1800000, color: '#45B7D1' },
-    { name: 'Giải trí', value: 800000, color: '#96CEB4' },
-    { name: 'Khác', value: 700000, color: '#FFEAA7' },
-  ];
-
-  const trendData = [
-    { name: 'T1', balance: 2000000 },
-    { name: 'T2', balance: 2000000 },
-    { name: 'T3', balance: 1000000 },
-    { name: 'T4', balance: 2000000 },
-    { name: 'T5', balance: 1300000 },
-    { name: 'T6', balance: 3000000 },
-  ];
 
   if (loading) {
     return (
