@@ -171,3 +171,4 @@ npm run build
 - [ ] Tích hợp biểu đồ nâng cao
 - [ ] Tích hợp AI dự đoán chi tiêu
 - [ ] Hỗ trợ chia sẻ dữ liệu
+- [ ] Đồng bộ dữ liệu đa thiết bị
