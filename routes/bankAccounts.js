@@ -4,7 +4,25 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get all bank accounts
+router.get('/', auth, async (req, res) => {
+  try {
+    const accounts = await BankAccount.find({ 
+      user: req.user.id,
+      isActive: true 
+    });
 
+    res.json({
+      success: true,
+      data: accounts
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server'
+    });
+  }
+});
 
 // Add bank account
 router.post('/', auth, async (req, res) => {
