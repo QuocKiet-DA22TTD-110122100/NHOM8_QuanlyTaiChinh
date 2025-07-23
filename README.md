@@ -167,3 +167,4 @@ npm run build
 - [ ] Xuất báo cáo PDF
 - [ ] Thêm tính năng nhắc nhở thanh toán
 - [ ] Hỗ trợ nhiều loại tiền tệ
+- [ ] Phát triển phiên bản mobile 
