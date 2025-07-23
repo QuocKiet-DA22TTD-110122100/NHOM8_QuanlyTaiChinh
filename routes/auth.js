@@ -118,21 +118,7 @@ router.post('/login', [
   }
 });
 
-// Get Profile
-router.get('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    res.json({
-      success: true,
-      user
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Lỗi server' 
-    });
-  }
-});
+
 
 // Verify token route
 router.get('/verify', auth, async (req, res) => {
