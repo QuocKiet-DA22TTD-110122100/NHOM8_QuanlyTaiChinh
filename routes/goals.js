@@ -137,7 +137,6 @@ router.delete('/:id', auth, async (req, res) => {
     });
   }
 });
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');    
+   
 
 module.exports = router;
