@@ -2,9 +2,6 @@ require('dotenv').config();
 const { app, server } = require('./app');
 const connectDB = require('./config/database');
 
-const express = require('express');
-const bodyParser = require('body-parser');  
-const jwt = require('jsonwebtoken');
 // Connect to database
 connectDB();
 
