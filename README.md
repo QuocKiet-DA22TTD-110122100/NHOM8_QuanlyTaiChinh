@@ -168,3 +168,4 @@ npm run build
 - [ ] Thêm tính năng nhắc nhở thanh toán
 - [ ] Hỗ trợ nhiều loại tiền tệ
 - [ ] Phát triển phiên bản mobile 
+- [ ] Tích hợp biểu đồ nâng cao
