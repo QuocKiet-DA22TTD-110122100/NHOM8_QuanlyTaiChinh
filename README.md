@@ -169,3 +169,5 @@ npm run build
 - [ ] Hỗ trợ nhiều loại tiền tệ
 - [ ] Phát triển phiên bản mobile 
 - [ ] Tích hợp biểu đồ nâng cao
+- [ ] Tích hợp AI dự đoán chi tiêu
+
