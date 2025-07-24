@@ -3,20 +3,124 @@
 <head>
     <title>Finance App - Quản lý tài chính</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; }
-        .form-group { margin: 15px 0; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
-        button:hover { background: #0056b3; }
-        .transactions { margin-top: 30px; }
-        .transaction { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
-        .income { border-left-color: #28a745; }
-        .expense { border-left-color: #dc3545; }
-        .auth-section { margin-bottom: 30px; padding: 20px; background: #e9ecef; border-radius: 5px; }
-    </style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+        /* Gradient nền xanh ngọc - tím nhạt */
+        min-height: 100vh;
+        color: #333;
+        animation: gradientBG 10s ease infinite alternate;
+        background-size: 400% 400%;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 100% 50%; }
+    }
+
+    .container {
+        max-width: 960px;
+        margin: 40px auto;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        backdrop-filter: blur(5px);
+        transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+        transform: translateY(-5px);
+    }
+
+    h1 {
+        color: #222;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+        margin: 20px 0;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+
+    input, select, textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 15px;
+        transition: border 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0 0 5px rgba(0,123,255,0.3);
+    }
+
+    button {
+        background: #007bff;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s ease, transform 0.2s ease;
+        margin: 5px 0;
+    }
+
+    button:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    .transactions {
+        margin-top: 40px;
+    }
+
+    .transaction {
+        background: #f9fafb;
+        padding: 18px 20px;
+        margin: 12px 0;
+        border-radius: 8px;
+        border-left: 5px solid #007bff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease;
+    }
+
+    .transaction:hover {
+        transform: scale(1.02);
+    }
+
+    .income {
+        border-left-color: #28a745;
+    }
+
+    .expense {
+        border-left-color: #dc3545;
+    }
+
+    .auth-section {
+        margin-bottom: 40px;
+        padding: 25px;
+        background: rgba(233, 236, 239, 0.95);
+        border-radius: 8px;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+    }
+</style>
+
 </head>
 <body>
     <div class="container">

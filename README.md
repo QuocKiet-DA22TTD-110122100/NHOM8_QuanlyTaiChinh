@@ -121,6 +121,9 @@ docker-compose up -d
 - [ ] Thêm WebSocket cho thông báo realtime
 - [ ] Tích hợp với các API ngân hàng
 - [ ] Hỗ trợ webhook cho tích hợp bên thứ 3
+- [ ] Phát triển API RESTful chuẩn hóa
+- [ ] Triển khai bảo mật backend
+
 
 ### Frontend
 - [ ] Thêm PWA hỗ trợ offline
@@ -167,3 +170,8 @@ npm run build
 - [ ] Xuất báo cáo PDF
 - [ ] Thêm tính năng nhắc nhở thanh toán
 - [ ] Hỗ trợ nhiều loại tiền tệ
+- [ ] Phát triển phiên bản mobile 
+- [ ] Tích hợp biểu đồ nâng cao
+- [ ] Tích hợp AI dự đoán chi tiêu
+- [ ] Hỗ trợ chia sẻ dữ liệu
+- [ ] Đồng bộ dữ liệu đa thiết bị
