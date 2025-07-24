@@ -99,6 +99,16 @@ const transactionSchema = new mongoose.Schema({
     default: 'completed'
   },
   // Mongoose timestamps will handle createdAt and updatedAt
+  bankReference: {
+    type: String,
+    index: true // Để tránh duplicate khi sync
+  },
+  bankAccount: {
+    type: String // Số tài khoản ngân hàng
+  },
+  syncedAt: {
+    type: Date // Thời gian đồng bộ từ ngân hàng
+  },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -149,13 +159,13 @@ transactionSchema.pre('save', function(next) {
 // Static methods
 transactionSchema.statics.getMonthlyStats = async function(userId, year, month) {
   const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 1);
+  const endDate = new Date(year, month, 0); // Sửa từ month, 1 thành month, 0
 
   return this.aggregate([
     {
       $match: {
         userId: userId,
-        date: { $gte: startDate, $lt: endDate }
+        date: { $gte: startDate, $lte: endDate } // Sửa từ $lt thành $lte
       }
     },
     {
@@ -168,6 +178,61 @@ transactionSchema.statics.getMonthlyStats = async function(userId, year, month) 
     }
   ]);
 };
+
+transactionSchema.statics.getSummaryStats = async function(userId, startDate, endDate) {
+  return this.aggregate([
+    {
+      $match: {
+        userId: userId,
+        date: { $gte: startDate, $lte: endDate }
+      }
+    },
+    {
+      $group: {
+        _id: '$type',
+        total: { $sum: '$amount' },
+        count: { $sum: 1 },
+        avgAmount: { $avg: '$amount' },
+        maxAmount: { $max: '$amount' },
+        minAmount: { $min: '$amount' }
+      }
+    }
+  ]);
+};
+
+transactionSchema.statics.getCategoryBreakdownByType = async function(userId, startDate, endDate) {
+  return this.aggregate([
+    {
+      $match: {
+        userId: userId,
+        date: { $gte: startDate, $lte: endDate }
+      }
+    },
+    {
+      $group: {
+        _id: { type: '$type', category: '$category' },
+        total: { $sum: '$amount' },
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $group: {
+        _id: '$_id.type',
+        categories: {
+          $push: {
+            category: '$_id.category',
+            total: '$total',
+            count: '$count'
+          }
+        }
+      }
+    }
+  ]);
+};
+
+transactionSchema.virtual('isPositiveBalance').get(function() {
+  return this.type === 'income';
+});
 
 transactionSchema.statics.getCategoryBreakdown = async function(userId, type, startDate, endDate) {
   return this.aggregate([

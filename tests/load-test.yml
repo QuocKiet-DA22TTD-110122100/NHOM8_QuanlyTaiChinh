@@ -1,0 +1,79 @@
+config:
+  target: 'http://localhost:5000'
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 50
+      name: "Load test"
+    - duration: 60
+      arrivalRate: 100
+      name: "Stress test"
+  variables:
+    testEmail: "loadtest@example.com"
+    testPassword: "password123"
+
+scenarios:
+  - name: "Authentication Flow"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            email: "{{ $randomString() }}@example.com"
+            password: "{{ testPassword }}"
+            name: "Load Test User"
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ testEmail }}"
+            password: "{{ testPassword }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+  - name: "Transaction Operations"
+    weight: 50
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ testEmail }}"
+            password: "{{ testPassword }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - get:
+          url: "/api/v1/transactions"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+      - post:
+          url: "/api/v1/transactions"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            type: "expense"
+            amount: "{{ $randomInt(10000, 1000000) }}"
+            category: "food"
+            description: "Load test transaction"
+
+  - name: "Reports Generation"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ testEmail }}"
+            password: "{{ testPassword }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - get:
+          url: "/api/v1/reports/dashboard"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+      - get:
+          url: "/api/v1/transactions/stats?period=month"
+          headers:
+            Authorization: "Bearer {{ authToken }}"

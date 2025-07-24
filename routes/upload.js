@@ -41,9 +41,54 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-// Upload receipt
-router.post('/receipt', auth, upload.single('receipt'), (req, res) => {
-  try {
+// Separate storage for avatars
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = 'uploads/avatars';
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `avatar-${req.user._id}-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB for avatars
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png/; // Only images for avatars
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Avatar chỉ chấp nhận file ảnh (JPEG, JPG, PNG)'));
+    }
+  }
+});
+
+// Upload receipt with better error handling
+router.post('/receipt', auth, (req, res) => {
+  upload.single('receipt')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File quá lớn (tối đa 5MB)'
+        });
+      }
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -62,12 +107,7 @@ router.post('/receipt', auth, upload.single('receipt'), (req, res) => {
         path: `/uploads/receipts/${req.file.filename}`
       }
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi server'
-    });
-  }
+  });
 });
 
 // Upload avatar
@@ -85,7 +125,7 @@ router.post('/avatar', auth, upload.single('avatar'), (req, res) => {
       message: 'Tải avatar thành công',
       data: {
         filename: req.file.filename,
-        path: `/uploads/receipts/${req.file.filename}`
+        path: `/uploads/avatars/${req.file.filename}` // Sửa path
       }
     });
   } catch (error) {

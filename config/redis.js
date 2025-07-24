@@ -1,5 +1,4 @@
-const redis = require('redis');
-const logger = require('./logger');
+const Redis = require('ioredis');
 
 class RedisService {
   constructor() {
@@ -7,25 +6,35 @@ class RedisService {
     this.isConnected = false;
   }
 
-  async connect() {
+  connect() {
     try {
-      this.client = redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379'
-      });
-
-      this.client.on('error', (err) => {
-        logger.error('Redis Client Error', err);
-        this.isConnected = false;
+      this.client = new Redis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: process.env.REDIS_PORT || 6379,
+        password: process.env.REDIS_PASSWORD || undefined,
+        retryDelayOnFailover: 100,
+        maxRetriesPerRequest: 3,
+        lazyConnect: true
       });
 
       this.client.on('connect', () => {
-        logger.info('Redis connected successfully');
+        console.log('✅ Redis connected');
         this.isConnected = true;
       });
 
-      await this.client.connect();
+      this.client.on('error', (err) => {
+        console.log('⚠️ Redis connection error:', err.message);
+        this.isConnected = false;
+      });
+
+      this.client.on('close', () => {
+        console.log('⚠️ Redis connection closed');
+        this.isConnected = false;
+      });
+
     } catch (error) {
-      logger.error('Redis connection failed:', error);
+      console.log('⚠️ Redis initialization failed:', error.message);
+      this.isConnected = false;
     }
   }
 
@@ -34,18 +43,18 @@ class RedisService {
     try {
       return await this.client.get(key);
     } catch (error) {
-      logger.error('Redis GET error:', error);
+      console.error('Redis GET error:', error.message);
       return null;
     }
   }
 
-  async set(key, value, expireInSeconds = 3600) {
+  async set(key, value, ttl = 3600) {
     if (!this.isConnected) return false;
     try {
-      await this.client.setEx(key, expireInSeconds, JSON.stringify(value));
+      await this.client.setex(key, ttl, value);
       return true;
     } catch (error) {
-      logger.error('Redis SET error:', error);
+      console.error('Redis SET error:', error.message);
       return false;
     }
   }
@@ -56,7 +65,7 @@ class RedisService {
       await this.client.del(key);
       return true;
     } catch (error) {
-      logger.error('Redis DEL error:', error);
+      console.error('Redis DEL error:', error.message);
       return false;
     }
   }

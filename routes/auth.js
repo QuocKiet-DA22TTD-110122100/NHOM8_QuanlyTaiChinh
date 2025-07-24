@@ -1,163 +1,126 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
-const User = require('../models/User');
-const auth = require('../middleware/auth');
-
+const mongoose = require('mongoose');
+const { CustomError } = require('../middleware/errorHandler');
 const router = express.Router();
 
-// Register
-router.post('/register', [
-  body('name').trim().isLength({ min: 2 }),
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 })
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
+// Mock user data (replace with actual User model)
+const users = [
+  {
+    id: new mongoose.Types.ObjectId(), // ← Dùng ObjectId thay vì số
+    email: 'test@example.com',
+    password: '$2b$10$hash...', // bcrypt hash
+    name: 'Test User'
+  }
+];
 
-    const { name, email, password } = req.body;
+// Test route
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Auth routes working!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Register
+router.post('/register', async (req, res, next) => {
+  try {
+    const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      return next(new CustomError('All fields are required', 400));
+    }
 
     // Check if user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = users.find(u => u.email === email);
     if (existingUser) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email đã được sử dụng' 
-      });
+      return next(new CustomError('User already exists', 400));
     }
 
-    // Create user
-    const user = new User({ name, email, password });
-    await user.save();
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Generate JWT
+    // Create user
+    const user = {
+      id: Date.now(),
+      email,
+      password: hashedPassword,
+      name,
+      createdAt: new Date()
+    };
+    users.push(user);
+
+    // Generate token
     const token = jwt.sign(
-      { userId: user._id }, 
-      process.env.JWT_SECRET || 'default-secret',
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || 'secret-key',
       { expiresIn: '7d' }
     );
 
     res.status(201).json({
       success: true,
-      message: 'Đăng ký thành công',
+      message: 'Registration successful',
       token,
       user: {
-        id: user._id,
-        name: user.name,
+        id: user.id,
         email: user.email,
-        role: user.role
+        name: user.name
       }
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Lỗi server' 
-    });
+    next(error);
   }
 });
 
 // Login
-router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').exists()
-], async (req, res) => {
+router.post('/login', async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
-      });
-    }
-
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Email hoặc mật khẩu không đúng' 
-      });
+    if (!email || !password) {
+      return next(new CustomError('Email and password are required', 400));
     }
 
-    // Update last active
-    user.lastActive = new Date();
-    await user.save();
+    // Find user (mock data for now)
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      return next(new CustomError('Invalid credentials', 401));
+    }
 
-    // Generate JWT
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return next(new CustomError('Invalid credentials', 401));
+    }
+
+    // Generate token with same secret as middleware
+    const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
     const token = jwt.sign(
-      { userId: user._id }, 
-      process.env.JWT_SECRET || 'default-secret',
-      { expiresIn: '7d' }
+      { 
+        userId: user.id.toString(), // Convert ObjectId to string
+        email: user.email 
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' } // Tăng thời gian để test
     );
 
+    console.log('🎫 Token generated for user:', user.email);
+
     res.json({
       success: true,
-      message: 'Đăng nhập thành công',
+      message: 'Login successful',
       token,
       user: {
-        id: user._id,
-        name: user.name,
+        id: user.id.toString(),
         email: user.email,
-        role: user.role
+        name: user.name
       }
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Lỗi server' 
-    });
-  }
-});
-
-// Get Profile
-router.get('/profile', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    res.json({
-      success: true,
-      user
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Lỗi server' 
-    });
-  }
-});
-
-// Verify token route
-router.get('/verify', auth, async (req, res) => {
-  try {
-    res.json({
-      success: true,
-      message: 'Token hợp lệ',
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi server'
-    });
+    next(error);
   }
 });
 
 module.exports = router;
-
-
-
-
-

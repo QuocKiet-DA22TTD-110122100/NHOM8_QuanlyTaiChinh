@@ -3,6 +3,12 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const http = require('http');
+const mongoose = require('mongoose');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
+
+// Import middleware
+const auth = require('./middlewares/auth'); // Nếu ở thư mục middlewares
 
 // Import services
 const redisService = require('./config/redis');
@@ -40,16 +46,23 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use('/uploads', express.static('uploads'));
 
+// Debug swagger spec
+console.log('Swagger paths:', Object.keys(swaggerSpec.paths || {}));
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const transactionRoutes = require('./routes/transactions');
+const reportRoutes = require('./routes/reports');
+const bankRoutes = require('./routes/bankApi');
+
 // Routes
-app.use('/api/v1/auth', require('./routes/auth'));
-app.use('/api/v1/transactions', require('./routes/transactions'));
-app.use('/api/v1/categories', require('./routes/categories'));
-app.use('/api/v1/reports', require('./routes/reports'));
-app.use('/api/v1/notifications', require('./routes/notifications'));
-app.use('/api/v1/upload', require('./routes/upload'));
-app.use('/api/v1/bank-accounts', require('./routes/bankAccounts'));
-app.use('/api/v1/goals', require('./routes/goals'));
-app.use('/api/v1/webhooks', require('./routes/webhooks')); // New webhook routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/transactions', auth, transactionRoutes);
+app.use('/api/v1/reports', auth, reportRoutes);
+app.use('/api/v1/bank', bankRoutes);
 
 // Health Check
 app.get('/api/v1/health', (req, res) => {
@@ -86,6 +99,17 @@ app.use('*', (req, res) => {
     success: false, 
     message: 'Route not found' 
   });
+});
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI || 'mongodb://admin:123456@localhost:27017/financeapp?authSource=admin')
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔐 Auth test: http://localhost:${PORT}/api/v1/auth/test`);
 });
 
 module.exports = { app, server };

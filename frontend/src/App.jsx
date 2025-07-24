@@ -1,95 +1,61 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Auth from './components/Auth';
 import DashboardLayout from './layouts/DashboardLayout';
 import Dashboard from './pages/Dashboard';
-import Income from './pages/Income';
-import Expense from './pages/Expense';
-import Budget from './pages/Budget';
-import Reports from './pages/Reports';
-import Profile from './pages/Profile';
+import BankSyncPage from './pages/BankSyncPage';
+import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is logged in
     const token = localStorage.getItem('token');
     if (token) {
-      // Verify token with backend
-      fetch('http://localhost:5001/api/v1/auth/verify', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setIsAuthenticated(true);
-          setUser(data.user);
-        } else {
-          localStorage.removeItem('token');
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Auth verify error:', error);
-        localStorage.removeItem('token');
-        setLoading(false);
-      });
-    } else {
-      setLoading(false);
+      // Validate token and get user info
+      setUser({ name: 'User' }); // Mock user
     }
+    setLoading(false);
   }, []);
 
-  const handleLogin = (token) => {
-    setIsAuthenticated(true);
-    // Fetch user info after login
-    fetch('http://localhost:5001/api/v1/auth/verify', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        setUser(data.user);
-      }
-    });
+  const handleLogin = (userData) => {
+    setUser(userData);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setIsAuthenticated(false);
     setUser(null);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Auth onLogin={handleLogin} />;
-  }
-
   return (
     <Router>
-      
-        <DashboardLayout user={user} onLogout={handleLogout}>
-          <Routes>
-            <Route path="/" element={<Dashboard user={user} />} />
-            <Route path="/thu-nhap" element={<Income />} />
-            <Route path="/chi-tieu" element={<Expense />} />
-            <Route path="/ngan-sach" element={<Budget />} />
-            <Route path="/bao-cao" element={<Reports />} />
-            <Route path="/ho-so" element={<Profile />} />
-          </Routes>
-        </DashboardLayout>
+      <div className="App">
+        {!user ? (
+          <Auth onLogin={handleLogin} />
+        ) : (
+          <DashboardLayout user={user} onLogout={handleLogout}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/bank-sync" element={<BankSyncPage />} />
+              <Route path="/thu-nhap" element={<div>Thu nhập page</div>} />
+              <Route path="/chi-tieu" element={<div>Chi tiêu page</div>} />
+              <Route path="/ngan-sach" element={<div>Ngân sách page</div>} />
+              <Route path="/bao-cao" element={<div>Báo cáo page</div>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </DashboardLayout>
+        )}
+      </div>
     </Router>
   );
 }

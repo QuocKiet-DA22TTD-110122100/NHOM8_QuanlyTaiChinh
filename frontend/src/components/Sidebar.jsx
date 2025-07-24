@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import {
   HomeIcon,
   BanknotesIcon,
@@ -63,6 +63,15 @@ const menuItems = [
     gradient: 'from-purple-500 to-indigo-600',
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     textColor: 'text-purple-600 dark:text-purple-400'
+  },
+  {
+    path: '/bank-sync',
+    icon: BanknotesIcon,
+    iconSolid: BanknotesIconSolid,
+    text: 'Đồng bộ Ngân hàng',
+    gradient: 'from-cyan-500 to-blue-600',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
+    textColor: 'text-cyan-600 dark:text-cyan-400'
   },
 ];
 

@@ -1,94 +1,84 @@
-const { Server } = require('ws');
-const jwt = require('jsonwebtoken');
-const logger = require('../config/logger');
+const WebSocket = require('ws');
 
 class WebSocketService {
   constructor() {
     this.wss = null;
-    this.clients = new Map(); // userId -> ws connection
+    this.clients = new Set();
   }
 
   initialize(server) {
-    this.wss = new Server({ server });
-
-    this.wss.on('connection', (ws, req) => {
-      this.handleConnection(ws, req);
-    });
-
-    logger.info('WebSocket server initialized');
-  }
-
-  async handleConnection(ws, req) {
     try {
-      // Authenticate WebSocket connection
-      const token = new URL(req.url, 'http://localhost').searchParams.get('token');
+      this.wss = new WebSocket.Server({ server });
       
-      if (!token) {
-        ws.close(1008, 'Token required');
-        return;
-      }
+      this.wss.on('connection', (ws, req) => {
+        console.log('🔌 New WebSocket connection');
+        this.clients.add(ws);
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const userId = decoded.userId;
+        ws.on('message', (message) => {
+          try {
+            const data = JSON.parse(message);
+            console.log('📨 WebSocket message:', data);
+            
+            // Echo back or handle message
+            ws.send(JSON.stringify({
+              type: 'response',
+              data: 'Message received',
+              timestamp: new Date().toISOString()
+            }));
+          } catch (error) {
+            console.error('WebSocket message error:', error.message);
+          }
+        });
 
-      // Store connection
-      this.clients.set(userId, ws);
-      logger.info(`WebSocket client connected: ${userId}`);
+        ws.on('close', () => {
+          console.log('🔌 WebSocket connection closed');
+          this.clients.delete(ws);
+        });
 
-      ws.on('close', () => {
-        this.clients.delete(userId);
-        logger.info(`WebSocket client disconnected: ${userId}`);
+        ws.on('error', (error) => {
+          console.error('WebSocket error:', error.message);
+          this.clients.delete(ws);
+        });
+
+        // Send welcome message
+        ws.send(JSON.stringify({
+          type: 'welcome',
+          message: 'Connected to Finance App WebSocket',
+          timestamp: new Date().toISOString()
+        }));
       });
 
-      ws.on('error', (error) => {
-        logger.error('WebSocket error:', error);
-        this.clients.delete(userId);
-      });
-
-      // Send welcome message
-      this.sendToUser(userId, {
-        type: 'connection',
-        message: 'Connected successfully'
-      });
-
+      console.log('✅ WebSocket server initialized');
     } catch (error) {
-      logger.error('WebSocket authentication failed:', error);
-      ws.close(1008, 'Authentication failed');
+      console.error('❌ WebSocket initialization failed:', error.message);
     }
   }
 
-  sendToUser(userId, data) {
-    const ws = this.clients.get(userId);
-    if (ws && ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify(data));
-      return true;
-    }
-    return false;
-  }
+  broadcast(message) {
+    if (!this.wss) return;
+    
+    const data = JSON.stringify({
+      type: 'broadcast',
+      data: message,
+      timestamp: new Date().toISOString()
+    });
 
-  broadcast(data) {
-    this.clients.forEach((ws, userId) => {
-      if (ws.readyState === ws.OPEN) {
-        ws.send(JSON.stringify(data));
+    this.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(data);
+        } catch (error) {
+          console.error('Broadcast error:', error.message);
+          this.clients.delete(client);
+        }
       }
     });
   }
 
-  // Notify user about new transaction
-  notifyTransaction(userId, transaction) {
-    this.sendToUser(userId, {
-      type: 'transaction',
-      action: 'created',
-      data: transaction
-    });
-  }
-
-  // Notify user about budget alert
-  notifyBudgetAlert(userId, alert) {
-    this.sendToUser(userId, {
-      type: 'budget_alert',
-      data: alert
-    });
+  sendToUser(userId, message) {
+    // Implementation for sending to specific user
+    // Would need to track user IDs with connections
+    this.broadcast({ userId, message });
   }
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { 
   CurrencyDollarIcon, 
@@ -426,6 +427,30 @@ function Dashboard() {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Bank Sync Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            🏦 Đồng bộ Ngân hàng
+          </h3>
+          <Link 
+            to="/bank-sync"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            Xem tất cả →
+          </Link>
+        </div>
+        <p className="text-gray-600 dark:text-gray-400 text-sm">
+          Đồng bộ giao dịch từ tài khoản ngân hàng
+        </p>
+        <Link 
+          to="/bank-sync"
+          className="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Đồng bộ ngay
+        </Link>
       </div>
     </div>
   );

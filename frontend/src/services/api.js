@@ -1,7 +1,10 @@
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
+export const API_BASE_URL = isDevelopment 
+  ? 'http://localhost:5000/api/v1'  // Sửa từ 5001 thành 5000
+  : '/api/v1';
+
+export const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
@@ -9,15 +12,21 @@ const getAuthHeaders = () => {
   };
 };
 
-// Helper function to handle API responses
-const handleResponse = async (response) => {
-  const data = await response.json();
-  
+export const handleResponse = async (response) => {
   if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong');
+    const error = await response.json().catch(() => ({ message: 'Network error' }));
+    throw new Error(error.message || 'Something went wrong');
   }
-  
-  return data;
+  return response.json();
+};
+
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    VERIFY: '/auth/verify'
+  },
+  HEALTH: '/health'
 };
 
 // Auth API
