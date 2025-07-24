@@ -45,7 +45,8 @@
     "security:audit": "npm audit --audit-level moderate",
     "security:fix": "npm audit fix",
     "precommit": "npm run lint:fix && npm run format && npm run test:basic",
-    "prepare": "husky install",
+    "prepare": "node -e \"if (process.env.NODE_ENV !== 'production') require('husky').install()\"",
+    "postinstall": "if [ \"$NODE_ENV\" != \"production\" ]; then husky install; fi",
     "build": "echo 'No build step required for Node.js backend'",
     "clean": "rm -rf node_modules package-lock.json && npm install"
   },
@@ -104,7 +105,7 @@
     "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
+    "swagger-ui-express": "^5.0.0",
     "unzipper": "^0.12.3",
     "uuid": "^10.0.0",
     "validator": "^13.11.0",
@@ -148,6 +149,13 @@
     "typedoc": "^0.26.11",
     "wait-on": "^8.0.1"
   },
+  
+  "scripts": {
+    "check:mongo": "node scripts/check-mongo.js",
+    "docker:mongo": "docker-compose up mongo -d",
+    "docker:stop": "docker-compose down"
+  },
+
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
