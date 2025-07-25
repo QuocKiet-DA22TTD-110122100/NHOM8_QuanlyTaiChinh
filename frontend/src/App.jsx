@@ -1,10 +1,45 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import Auth from './components/Auth';
 import DashboardLayout from './layouts/DashboardLayout';
 import Dashboard from './pages/Dashboard';
 import BankSyncPage from './pages/BankSyncPage';
-import './App.css';
+import AdminUsers from './pages/AdminUsers';
+import AdminTransactions from './pages/AdminTransactions';
+import AdminCategories from './pages/AdminCategories';
+import AdminSystemSettings from './pages/AdminSystemSettings';
+
+function AnimatedRoutes({ user, handleLogin, handleLogout }) {
+  const location = useLocation();
+  return (
+    <TransitionGroup component={null}>
+      <CSSTransition key={location.pathname} classNames="page" timeout={400}>
+        <div className="page-transition">
+          {!user ? (
+            <Auth onLogin={handleLogin} />
+          ) : (
+            <DashboardLayout user={user} onLogout={handleLogout}>
+              <Routes location={location}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/bank-sync" element={<BankSyncPage />} />
+                <Route path="/thu-nhap" element={<div>Thu nhập page</div>} />
+                <Route path="/chi-tieu" element={<div>Chi tiêu page</div>} />
+                <Route path="/ngan-sach" element={<div>Ngân sách page</div>} />
+                <Route path="/bao-cao" element={<div>Báo cáo page</div>} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/transactions" element={<AdminTransactions />} />
+                <Route path="/admin/categories" element={<AdminCategories />} />
+                <Route path="/admin/settings" element={<AdminSystemSettings />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </DashboardLayout>
+          )}
+        </div>
+      </CSSTransition>
+    </TransitionGroup>
+  );
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -40,21 +75,7 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {!user ? (
-          <Auth onLogin={handleLogin} />
-        ) : (
-          <DashboardLayout user={user} onLogout={handleLogout}>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/bank-sync" element={<BankSyncPage />} />
-              <Route path="/thu-nhap" element={<div>Thu nhập page</div>} />
-              <Route path="/chi-tieu" element={<div>Chi tiêu page</div>} />
-              <Route path="/ngan-sach" element={<div>Ngân sách page</div>} />
-              <Route path="/bao-cao" element={<div>Báo cáo page</div>} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </DashboardLayout>
-        )}
+        <AnimatedRoutes user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
       </div>
     </Router>
   );

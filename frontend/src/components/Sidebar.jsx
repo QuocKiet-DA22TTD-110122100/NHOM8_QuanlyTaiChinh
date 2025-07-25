@@ -8,7 +8,10 @@ import {
   SunIcon,
   MoonIcon,
   Bars3Icon,
-  SparklesIcon
+  SparklesIcon,
+  ShieldCheckIcon,
+  ChartBarIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -72,6 +75,42 @@ const menuItems = [
     gradient: 'from-cyan-500 to-blue-600',
     bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
     textColor: 'text-cyan-600 dark:text-cyan-400'
+  },
+  {
+    path: '/admin/users',
+    icon: ShieldCheckIcon,
+    iconSolid: ShieldCheckIcon,
+    text: 'Quản lý người dùng',
+    gradient: 'from-indigo-500 to-blue-600',
+    bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+    textColor: 'text-indigo-600 dark:text-indigo-400'
+  },
+  {
+    path: '/admin/transactions',
+    icon: CreditCardIcon,
+    iconSolid: CreditCardIconSolid,
+    text: 'Quản lý thu chi',
+    gradient: 'from-green-500 to-emerald-600',
+    bgColor: 'bg-green-50 dark:bg-green-900/20',
+    textColor: 'text-green-600 dark:text-green-400'
+  },
+  {
+    path: '/admin/categories',
+    icon: ChartBarIcon,
+    iconSolid: ChartBarIcon,
+    text: 'Quản lý danh mục',
+    gradient: 'from-pink-500 to-yellow-500',
+    bgColor: 'bg-pink-50 dark:bg-pink-900/20',
+    textColor: 'text-pink-600 dark:text-pink-400'
+  },
+  {
+    path: '/admin/settings',
+    icon: CogIcon,
+    iconSolid: CogIcon,
+    text: 'Cấu hình hệ thống',
+    gradient: 'from-gray-500 to-indigo-500',
+    bgColor: 'bg-gray-50 dark:bg-gray-900/20',
+    textColor: 'text-gray-700 dark:text-gray-200'
   },
 ];
 
