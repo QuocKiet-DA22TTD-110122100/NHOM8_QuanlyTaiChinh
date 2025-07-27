@@ -40,6 +40,9 @@ const Auth = ({ onLogin }) => {
       if (data.success) {
         if (isLogin) {
           localStorage.setItem('token', data.token);
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
           toast.success('Đăng nhập thành công');
           onLogin(data.token);
         } else {
@@ -53,6 +56,9 @@ const Auth = ({ onLogin }) => {
             const loginData = await loginResponse.json();
             if (loginData.success) {
               localStorage.setItem('token', loginData.token);
+              if (loginData.user) {
+                localStorage.setItem('user', JSON.stringify(loginData.user));
+              }
               toast.success('Đăng ký & đăng nhập thành công!');
               onLogin(loginData.token);
             } else {
