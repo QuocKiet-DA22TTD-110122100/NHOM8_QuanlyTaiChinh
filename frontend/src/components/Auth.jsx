@@ -2,6 +2,15 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
+function ensureUserFields(user, formData) {
+  return {
+    name: user?.name || formData?.name || 'User',
+    email: user?.email || formData?.email || '',
+    role: user?.role || 'user',
+    ...user
+  };
+}
+
 const Auth = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -41,7 +50,8 @@ const Auth = ({ onLogin }) => {
         if (isLogin) {
           localStorage.setItem('token', data.token);
           if (data.user) {
-            localStorage.setItem('user', JSON.stringify(data.user));
+            const safeUser = ensureUserFields(data.user, formData);
+            localStorage.setItem('user', JSON.stringify(safeUser));
           }
           toast.success('Đăng nhập thành công');
           onLogin(data.token);
@@ -57,7 +67,8 @@ const Auth = ({ onLogin }) => {
             if (loginData.success) {
               localStorage.setItem('token', loginData.token);
               if (loginData.user) {
-                localStorage.setItem('user', JSON.stringify(loginData.user));
+                const safeUser = ensureUserFields(loginData.user, formData);
+                localStorage.setItem('user', JSON.stringify(safeUser));
               }
               toast.success('Đăng ký & đăng nhập thành công!');
               onLogin(loginData.token);

@@ -14,25 +14,61 @@ import { UserContext } from '../App';
 
 function Profile() {
   const { user, setUser } = useContext(UserContext);
-  // Nếu không có user hoặc thiếu thông tin cơ bản, hiển thị thông báo
-  if (!user || (!user.name && !user.email)) {
-    return (
-      <div className="max-w-2xl mx-auto mt-16 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Chưa có thông tin hồ sơ</h2>
-        <p className="text-gray-600 dark:text-gray-400">Vui lòng đăng nhập lại hoặc cập nhật thông tin tài khoản.</p>
-      </div>
-    );
-  }
-  
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
-    const savedUser = user; // Use user from context
-    setUser(savedUser);
-    setEditData(savedUser);
-  }, [user]); // Add user to dependency array
+    setEditData(user || {});
+  }, [user]);
 
+  // Nếu không có user hoặc thiếu name/email, hiển thị form cập nhật thông tin
+  if (!user || (!user.name && !user.email)) {
+    return (
+      <div className="max-w-2xl mx-auto mt-16 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Cập nhật thông tin hồ sơ</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">Vui lòng nhập tên và email để hoàn thiện hồ sơ cá nhân.</p>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            if (!editData.name || !editData.email) return;
+            setUser(editData);
+            localStorage.setItem('user', JSON.stringify(editData));
+            setIsEditing(false);
+            window.location.reload();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Họ tên</label>
+            <input
+              type="text"
+              value={editData.name || ''}
+              onChange={e => setEditData({ ...editData, name: e.target.value })}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+            <input
+              type="email"
+              value={editData.email || ''}
+              onChange={e => setEditData({ ...editData, email: e.target.value })}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          >
+            Lưu thông tin
+          </button>
+        </form>
+      </div>
+    );
+  }
+  
   const handleSave = () => {
     setUser(editData);
     localStorage.setItem('user', JSON.stringify(editData));
