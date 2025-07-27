@@ -145,8 +145,8 @@ function Sidebar({ darkMode, setDarkMode, collapsed = false }) {
 
   let filteredMenu = [];
   if (role === 'admin') {
-    // Admin thấy cả menu user và admin
-    filteredMenu = menuItems.filter(item => userMenu.includes(item.path) || adminMenu.includes(item.path));
+    // Admin chỉ thấy menu quản lý
+    filteredMenu = menuItems.filter(item => adminMenu.includes(item.path));
   } else {
     filteredMenu = menuItems.filter(item => userMenu.includes(item.path));
   }
