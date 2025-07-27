@@ -10,6 +10,10 @@ import AdminTransactions from './pages/AdminTransactions';
 import AdminCategories from './pages/AdminCategories';
 import AdminSystemSettings from './pages/AdminSystemSettings';
 import AdminReports from './pages/AdminReports';
+import Reports from './pages/Reports';
+import Income from './pages/Income';
+import Expense from './pages/Expense';
+import Budget from './pages/Budget';
 import AdminRoute from './components/AdminRoute';
 
 function AnimatedRoutes({ user, handleLogin, handleLogout }) {
@@ -25,10 +29,10 @@ function AnimatedRoutes({ user, handleLogin, handleLogout }) {
               <Routes location={location}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/bank-sync" element={<BankSyncPage />} />
-                <Route path="/thu-nhap" element={<div>Thu nhập page</div>} />
-                <Route path="/chi-tieu" element={<div>Chi tiêu page</div>} />
-                <Route path="/ngan-sach" element={<div>Ngân sách page</div>} />
-                <Route path="/bao-cao" element={<div>Báo cáo page</div>} />
+                <Route path="/thu-nhap" element={<Income />} />
+                <Route path="/chi-tieu" element={<Expense />} />
+                <Route path="/ngan-sach" element={<Budget />} />
+                <Route path="/bao-cao" element={<Reports />} />
                 <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                 <Route path="/admin/transactions" element={<AdminRoute><AdminTransactions /></AdminRoute>} />
                 <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
