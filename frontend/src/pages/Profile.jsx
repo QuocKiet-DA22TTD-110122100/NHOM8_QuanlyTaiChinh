@@ -21,8 +21,21 @@ function Profile() {
     setEditData(user || {});
   }, [user]);
 
-  // Nếu không có user hoặc thiếu name/email, hiển thị form cập nhật thông tin
-  if (!user || (!user.name && !user.email)) {
+  // Nếu không có user, hiển thị loading hoặc error
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto mt-16 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Đang tải...</h2>
+          <p className="text-gray-600 dark:text-gray-400">Vui lòng đợi trong giây lát</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Nếu thiếu thông tin cơ bản, hiển thị form cập nhật
+  if (!user.name || !user.email) {
     return (
       <div className="max-w-2xl mx-auto mt-16 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Cập nhật thông tin hồ sơ</h2>
@@ -34,7 +47,7 @@ function Profile() {
             setUser(editData);
             localStorage.setItem('user', JSON.stringify(editData));
             setIsEditing(false);
-            window.location.reload();
+            toast.success('Cập nhật hồ sơ thành công!');
           }}
           className="space-y-4"
         >
@@ -143,7 +156,7 @@ function Profile() {
                   {editData.avatar ? (
                     <img src={editData.avatar} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    editData.name.charAt(0).toUpperCase()
+                    (editData.name && editData.name.charAt(0).toUpperCase()) || 'U'
                   )}
                 </div>
                 {isEditing && (
@@ -158,7 +171,7 @@ function Profile() {
                   </label>
                 )}
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user.name || user.email || 'User'}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user.name || 'User'}</h2>
               <p className="text-gray-600 dark:text-gray-400">{user.email || 'Chưa có email'}</p>
               {user.joinDate && (
                 <div className="mt-4 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">

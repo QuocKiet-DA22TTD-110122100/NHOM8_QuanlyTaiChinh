@@ -14,6 +14,7 @@ import Reports from './pages/Reports';
 import Income from './pages/Income';
 import Expense from './pages/Expense';
 import Budget from './pages/Budget';
+import Profile from './pages/Profile';
 import AdminRoute from './components/AdminRoute';
 
 export const UserContext = createContext({ user: null, setUser: () => {} });
@@ -35,6 +36,7 @@ function AnimatedRoutes({ user, handleLogin, handleLogout }) {
                 <Route path="/chi-tieu" element={<Expense />} />
                 <Route path="/ngan-sach" element={<Budget />} />
                 <Route path="/bao-cao" element={<Reports />} />
+                <Route path="/ho-so" element={<Profile />} />
                 <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                 <Route path="/admin/transactions" element={<AdminRoute><AdminTransactions /></AdminRoute>} />
                 <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
