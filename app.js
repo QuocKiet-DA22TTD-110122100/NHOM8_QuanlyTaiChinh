@@ -66,6 +66,42 @@ app.use('/api/v1/transactions', auth, transactionRoutes);
 app.use('/api/v1/reports', auth, reportRoutes);
 app.use('/api/v1/bank', bankRoutes);
 
+/**
+ * @swagger
+ * /api/v1/health:
+ *   get:
+ *     tags: [Health]
+ *     summary: Kiểm tra trạng thái hệ thống
+ *     description: Kiểm tra sức khỏe của server, database và các dịch vụ
+ *     responses:
+ *       200:
+ *         description: Hệ thống hoạt động bình thường
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: "healthy"
+ *                 uptime:
+ *                   type: number
+ *                   description: "Thời gian hoạt động (giây)"
+ *                   example: 3600
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-01T00:00:00.000Z"
+ *                 redis:
+ *                   type: boolean
+ *                   description: "Trạng thái kết nối Redis"
+ *                   example: true
+ *                 websocket:
+ *                   type: string
+ *                   description: "Trạng thái WebSocket"
+ *                   example: "active"
+ */
+
 // Health Check
 app.get('/api/v1/health', (req, res) => {
   res.json({ 
