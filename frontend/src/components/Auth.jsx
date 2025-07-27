@@ -52,6 +52,7 @@ const Auth = ({ onLogin }) => {
           if (data.user) {
             const safeUser = ensureUserFields(data.user, formData);
             localStorage.setItem('user', JSON.stringify(safeUser));
+            console.log('🔍 Debug - Saved user to localStorage:', safeUser);
           }
           toast.success('Đăng nhập thành công');
           onLogin(data.token);
@@ -69,6 +70,7 @@ const Auth = ({ onLogin }) => {
               if (loginData.user) {
                 const safeUser = ensureUserFields(loginData.user, formData);
                 localStorage.setItem('user', JSON.stringify(safeUser));
+                console.log('🔍 Debug - Saved user to localStorage (register):', safeUser);
               }
               toast.success('Đăng ký & đăng nhập thành công!');
               onLogin(loginData.token);

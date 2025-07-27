@@ -134,6 +134,10 @@ function Sidebar({ darkMode, setDarkMode, collapsed = false }) {
     user = null;
   }
   const role = user?.role || 'user';
+  
+  // Debug: log để kiểm tra
+  console.log('Sidebar - User:', user);
+  console.log('Sidebar - Role:', role);
 
   // Phân loại menu
   const userMenu = [

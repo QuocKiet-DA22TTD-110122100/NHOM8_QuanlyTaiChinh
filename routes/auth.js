@@ -18,7 +18,7 @@ router.post('/register', async (req, res) => {
   try {
     console.log('Register request:', req.body);
     
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
 
     if (!email || !password || !name) {
       return res.status(400).json({
@@ -54,7 +54,7 @@ router.post('/register', async (req, res) => {
       email,
       password: hashedPassword,
       name,
-      role: 'user',
+      role: role || 'user', // Sử dụng role từ request hoặc default 'user'
       status: 'active'
     });
 
