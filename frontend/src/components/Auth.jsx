@@ -56,7 +56,7 @@ const Auth = ({ onLogin }) => {
             console.log('🔍 Debug - User role:', safeUser.role);
           }
           toast.success('Đăng nhập thành công');
-          onLogin(data.token);
+          onLogin(data.user);
         } else {
           // Đăng ký thành công, tự động đăng nhập
           try {
@@ -75,7 +75,7 @@ const Auth = ({ onLogin }) => {
                 console.log('🔍 Debug - User role (register):', safeUser.role);
               }
               toast.success('Đăng ký & đăng nhập thành công!');
-              onLogin(loginData.token);
+              onLogin(loginData.user);
             } else {
               setError(loginData.message || 'Đăng ký thành công nhưng đăng nhập thất bại.');
               toast.error(loginData.message || 'Đăng ký thành công nhưng đăng nhập thất bại.');

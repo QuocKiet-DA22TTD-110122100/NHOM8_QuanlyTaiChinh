@@ -11,14 +11,16 @@ import {
   SparklesIcon,
   ShieldCheckIcon,
   ChartBarIcon,
-  CogIcon
+  CogIcon,
+  UserIcon
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
   BanknotesIcon as BanknotesIconSolid,
   CreditCardIcon as CreditCardIconSolid,
   WalletIcon as WalletIconSolid,
-  ChartPieIcon as ChartPieIconSolid
+  ChartPieIcon as ChartPieIconSolid,
+  UserIcon as UserIconSolid
 } from '@heroicons/react/24/solid';
 
 const menuItems = [
@@ -58,7 +60,7 @@ const menuItems = [
     bgColor: 'bg-orange-50 dark:bg-orange-900/20',
     textColor: 'text-orange-600 dark:text-orange-400'
   },
-  { 
+    {
     path: '/bao-cao', 
     icon: ChartPieIcon, 
     iconSolid: ChartPieIconSolid,
@@ -66,6 +68,15 @@ const menuItems = [
     gradient: 'from-purple-500 to-indigo-600',
     bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     textColor: 'text-purple-600 dark:text-purple-400'
+  },
+  {
+    path: '/ho-so',
+    icon: UserIcon,
+    iconSolid: UserIconSolid,
+    text: 'Hồ sơ cá nhân',
+    gradient: 'from-teal-500 to-cyan-600',
+    bgColor: 'bg-teal-50 dark:bg-teal-900/20',
+    textColor: 'text-teal-600 dark:text-teal-400'
   },
   {
     path: '/bank-sync',
@@ -141,7 +152,7 @@ function Sidebar({ darkMode, setDarkMode, collapsed = false }) {
 
   // Phân loại menu
   const userMenu = [
-    '/', '/thu-nhap', '/chi-tieu', '/ngan-sach', '/bao-cao', '/bank-sync'
+    '/', '/thu-nhap', '/chi-tieu', '/ngan-sach', '/bao-cao', '/ho-so', '/bank-sync'
   ];
   const adminMenu = [
     '/admin/users', '/admin/transactions', '/admin/categories', '/admin/settings', '/admin/reports'
