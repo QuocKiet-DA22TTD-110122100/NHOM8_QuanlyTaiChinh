@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import Auth from './components/Auth';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -15,6 +15,8 @@ import Income from './pages/Income';
 import Expense from './pages/Expense';
 import Budget from './pages/Budget';
 import AdminRoute from './components/AdminRoute';
+
+export const UserContext = createContext({ user: null, setUser: () => {} });
 
 function AnimatedRoutes({ user, handleLogin, handleLogout }) {
   const location = useLocation();
@@ -55,9 +57,12 @@ function App() {
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem('token');
-    if (token) {
-      // Validate token and get user info
-      setUser({ name: 'User' }); // Mock user
+    let userData = null;
+    try {
+      userData = JSON.parse(localStorage.getItem('user'));
+    } catch {}
+    if (token && userData) {
+      setUser(userData);
     }
     setLoading(false);
   }, []);
@@ -68,6 +73,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
@@ -80,11 +86,13 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="App">
-        <AnimatedRoutes user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
-      </div>
-    </Router>
+    <UserContext.Provider value={{ user, setUser }}>
+      <Router>
+        <div className="App">
+          <AnimatedRoutes user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
+        </div>
+      </Router>
+    </UserContext.Provider>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -10,32 +10,35 @@ import {
   CameraIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
+import { UserContext } from '../App';
 
 function Profile() {
-  // Lấy user từ localStorage, fallback rỗng
-  const getUserFromStorage = () => {
-    try {
-      return JSON.parse(localStorage.getItem('user')) || {};
-    } catch {
-      return {};
-    }
-  };
-  const [user, setUser] = useState(getUserFromStorage());
+  const { user, setUser } = useContext(UserContext);
+  // Nếu không có user hoặc thiếu thông tin cơ bản, hiển thị thông báo
+  if (!user || (!user.name && !user.email)) {
+    return (
+      <div className="max-w-2xl mx-auto mt-16 p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg text-center">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Chưa có thông tin hồ sơ</h2>
+        <p className="text-gray-600 dark:text-gray-400">Vui lòng đăng nhập lại hoặc cập nhật thông tin tài khoản.</p>
+      </div>
+    );
+  }
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
-    const savedUser = getUserFromStorage();
+    const savedUser = user; // Use user from context
     setUser(savedUser);
     setEditData(savedUser);
-  }, []);
+  }, [user]); // Add user to dependency array
 
   const handleSave = () => {
     setUser(editData);
     localStorage.setItem('user', JSON.stringify(editData));
     setIsEditing(false);
     toast.success('Cập nhật hồ sơ thành công!');
+    // Không cần reload trang
   };
 
   const handleCancel = () => {
@@ -120,7 +123,7 @@ function Profile() {
                 )}
               </div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user.name || user.email || 'User'}</h2>
-              <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+              <p className="text-gray-600 dark:text-gray-400">{user.email || 'Chưa có email'}</p>
               {user.joinDate && (
                 <div className="mt-4 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                   <CalendarIcon className="h-4 w-4 mr-1" />

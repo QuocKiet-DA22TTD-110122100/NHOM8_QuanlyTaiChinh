@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import {
   BellIcon,
   UserIcon,
@@ -6,9 +6,11 @@ import {
   ChevronDownIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../App';
 
-function Header({ user, onLogout }) {
+function Header({ user: _userProp, onLogout }) {
   const navigate = useNavigate();
+  const { user: currentUser } = useContext(UserContext);
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -102,14 +104,14 @@ function Header({ user, onLogout }) {
   };
 
   // Lấy user từ localStorage nếu chưa có
-  let currentUser = user;
-  if (!currentUser) {
-    try {
-      currentUser = JSON.parse(localStorage.getItem('user'));
-    } catch (e) {
-      currentUser = null;
-    }
-  }
+  // let currentUser = user; // This line is removed as user is now from UserContext
+  // if (!currentUser) {
+  //   try {
+  //     currentUser = JSON.parse(localStorage.getItem('user'));
+  //   } catch (e) {
+  //     currentUser = null;
+  //   }
+  // }
 
   // Lấy tên user ưu tiên name, fallback sang email
   const displayName = currentUser?.name || currentUser?.email || 'User';
