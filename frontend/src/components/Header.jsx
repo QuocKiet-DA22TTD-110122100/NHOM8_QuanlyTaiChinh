@@ -111,6 +111,9 @@ function Header({ user, onLogout }) {
     }
   }
 
+  // Lấy tên user ưu tiên name, fallback sang email
+  const displayName = currentUser?.name || currentUser?.email || 'User';
+
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -119,7 +122,7 @@ function Header({ user, onLogout }) {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                {currentUser ? `Chào mừng, ${currentUser.name}!` : 'Bảng điều khiển'}
+                {currentUser ? `Chào mừng, ${displayName}!` : 'Bảng điều khiển'}
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {currentTime} - {currentDate}
@@ -206,9 +209,9 @@ function Header({ user, onLogout }) {
                 className="flex items-center space-x-2 p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                  {currentUser?.name?.charAt(0) || 'U'}
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
-                <span className="hidden md:block font-medium">{currentUser?.name || 'User'}</span>
+                <span className="hidden md:block font-medium">{displayName}</span>
                 <ChevronDownIcon className={`h-4 w-4 transition-transform duration-200 ${
                   showUserMenu ? 'rotate-180' : ''
                 }`} />

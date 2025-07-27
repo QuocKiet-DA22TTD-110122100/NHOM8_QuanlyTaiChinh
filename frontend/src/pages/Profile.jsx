@@ -12,21 +12,21 @@ import {
 import { toast } from 'react-toastify';
 
 function Profile() {
-  const [user, setUser] = useState({
-    name: 'Nguyễn Văn A',
-    email: 'nguyenvana@example.com',
-    phone: '0123456789',
-    avatar: null,
-    joinDate: '2024-01-15',
-    bio: 'Người dùng quản lý tài chính cá nhân'
-  });
+  // Lấy user từ localStorage, fallback rỗng
+  const getUserFromStorage = () => {
+    try {
+      return JSON.parse(localStorage.getItem('user')) || {};
+    } catch {
+      return {};
+    }
+  };
+  const [user, setUser] = useState(getUserFromStorage());
   
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ ...user });
 
   useEffect(() => {
-    // Load user data from localStorage or API
-    const savedUser = JSON.parse(localStorage.getItem('user')) || user;
+    const savedUser = getUserFromStorage();
     setUser(savedUser);
     setEditData(savedUser);
   }, []);
@@ -119,12 +119,14 @@ function Profile() {
                   </label>
                 )}
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user.name}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user.name || user.email || 'User'}</h2>
               <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
-              <div className="mt-4 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-                <CalendarIcon className="h-4 w-4 mr-1" />
-                Tham gia từ {new Date(user.joinDate).toLocaleDateString('vi-VN')}
-              </div>
+              {user.joinDate && (
+                <div className="mt-4 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                  <CalendarIcon className="h-4 w-4 mr-1" />
+                  Tham gia từ {new Date(user.joinDate).toLocaleDateString('vi-VN')}
+                </div>
+              )}
             </div>
           </div>
         </div>
