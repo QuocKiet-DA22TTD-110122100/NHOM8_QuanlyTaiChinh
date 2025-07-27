@@ -8,7 +8,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
 // Import middleware
-const auth = require('./middlewares/auth'); // Nếu ở thư mục middlewares
+const { auth } = require('./middlewares/auth'); // Nếu ở thư mục middlewares
 
 // Import services
 const redisService = require('./config/redis');
@@ -57,9 +57,11 @@ const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 const reportRoutes = require('./routes/reports');
 const bankRoutes = require('./routes/bankApi');
+// const userRoutes = require('./routes/users');
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/users', auth, userRoutes);
 app.use('/api/v1/transactions', auth, transactionRoutes);
 app.use('/api/v1/reports', auth, reportRoutes);
 app.use('/api/v1/bank', bankRoutes);

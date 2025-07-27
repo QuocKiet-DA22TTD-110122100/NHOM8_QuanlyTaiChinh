@@ -414,6 +414,7 @@ const options = {
     './routes/auth.js',
     './routes/transactions.js',
     './routes/reports.js',
+    // './routes/users.js',
     './routes/bankApi.js',
     './models/*.js',
     './app.js'
@@ -424,5 +425,6 @@ const specs = swaggerJsdoc(options);
 
 // Debug logging
 console.log('Swagger spec generated with paths:', Object.keys(specs.paths || {}));
+console.log('Swagger schemas:', Object.keys(specs.components?.schemas || {}));
 
-module.exports = { specs };
+module.exports = specs;

@@ -26,7 +26,7 @@ const Transaction = require('./models/Transaction');
 const authRoutes = require('./routes/auth');
 const transactionRoutes = require('./routes/transactions');
 const reportRoutes = require('./routes/reports');
-const userRoutes = require('./routes/users');
+// const userRoutes = require('./routes/users');
 const bankRoutes = require('./routes/bankApi');
 
 // Import middleware
@@ -118,7 +118,7 @@ app.get('/api/v1/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/transactions', auth, transactionRoutes);
 app.use('/api/v1/reports', auth, reportRoutes);
-app.use('/api/v1/users', auth, userRoutes);
+// app.use('/api/v1/users', auth, userRoutes);
 app.use('/api/v1/bank', auth, bankRoutes);
 
 // Global error handler
