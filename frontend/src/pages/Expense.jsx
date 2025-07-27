@@ -35,7 +35,51 @@ function Expense() {
   ];
 
   useEffect(() => {
-    const savedExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    let savedExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    
+    // Nếu không có dữ liệu, tạo dữ liệu mẫu
+    if (savedExpenses.length === 0) {
+      const sampleExpenses = [
+        {
+          id: 1,
+          description: 'Chi phí ăn uống tháng 7',
+          amount: 3000000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'food'
+        },
+        {
+          id: 2,
+          description: 'Xăng xe và taxi',
+          amount: 2000000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'transport'
+        },
+        {
+          id: 3,
+          description: 'Quần áo và đồ dùng',
+          amount: 1500000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'shopping'
+        },
+        {
+          id: 4,
+          description: 'Điện nước internet',
+          amount: 800000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'utilities'
+        },
+        {
+          id: 5,
+          description: 'Xem phim và giải trí',
+          amount: 500000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'entertainment'
+        }
+      ];
+      savedExpenses = sampleExpenses;
+      localStorage.setItem('expenses', JSON.stringify(sampleExpenses));
+    }
+    
     setExpenses(savedExpenses);
   }, []);
 

@@ -29,8 +29,28 @@ function Budget() {
   const [tempBudget, setTempBudget] = useState('');
 
   useEffect(() => {
-    const savedBudgets = JSON.parse(localStorage.getItem('budgets')) || {};
-    const savedExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    let savedBudgets = JSON.parse(localStorage.getItem('budgets')) || {};
+    let savedExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    
+    // Nếu không có dữ liệu ngân sách, tạo dữ liệu mẫu
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    if (!savedBudgets[currentMonth]) {
+      const sampleBudgets = {
+        [currentMonth]: {
+          food: 5000000,
+          transport: 3000000,
+          utilities: 2000000,
+          entertainment: 1500000,
+          shopping: 2000000,
+          health: 1000000,
+          education: 3000000,
+          other: 1000000
+        }
+      };
+      savedBudgets = { ...savedBudgets, ...sampleBudgets };
+      localStorage.setItem('budgets', JSON.stringify(savedBudgets));
+    }
+    
     setBudgets(savedBudgets);
     setExpenses(savedExpenses);
   }, []);

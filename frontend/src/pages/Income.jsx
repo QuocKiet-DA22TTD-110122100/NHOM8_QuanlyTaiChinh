@@ -31,7 +31,37 @@ function Income() {
   ];
 
   useEffect(() => {
-    const savedIncomes = JSON.parse(localStorage.getItem('incomes')) || [];
+    let savedIncomes = JSON.parse(localStorage.getItem('incomes')) || [];
+    
+    // Nếu không có dữ liệu, tạo dữ liệu mẫu
+    if (savedIncomes.length === 0) {
+      const sampleIncomes = [
+        {
+          id: 1,
+          description: 'Lương tháng 7',
+          amount: 15000000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'salary'
+        },
+        {
+          id: 2,
+          description: 'Thưởng dự án',
+          amount: 5000000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'business'
+        },
+        {
+          id: 3,
+          description: 'Lãi tiết kiệm',
+          amount: 2000000,
+          date: new Date().toISOString().split('T')[0],
+          category: 'investment'
+        }
+      ];
+      savedIncomes = sampleIncomes;
+      localStorage.setItem('incomes', JSON.stringify(sampleIncomes));
+    }
+    
     setIncomes(savedIncomes);
   }, []);
 
