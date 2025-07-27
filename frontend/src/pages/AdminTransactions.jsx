@@ -1,10 +1,5 @@
-import { useState } from 'react';
-
-const mockTransactions = [
-  { id: 1, user: 'Nguyễn Văn A', type: 'income', category: 'Lương', amount: 15000000, date: '2023-07-01', note: 'Lương tháng 7' },
-  { id: 2, user: 'Trần Thị B', type: 'expense', category: 'Ăn uống', amount: 500000, date: '2023-07-02', note: 'Ăn trưa' },
-  { id: 3, user: 'Lê Văn C', type: 'expense', category: 'Đi lại', amount: 200000, date: '2023-07-03', note: 'Grab' },
-];
+import { useEffect, useState } from 'react';
+import { adminTransactionApi } from '../services/adminTransactionApi';
 
 const typeColors = {
   income: 'bg-green-100 text-green-700',
@@ -12,7 +7,7 @@ const typeColors = {
 };
 
 export default function AdminTransactions() {
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -20,6 +15,47 @@ export default function AdminTransactions() {
   const [modalType, setModalType] = useState('create'); // create | edit | detail | delete
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [form, setForm] = useState({ user: '', type: 'income', category: '', amount: '', date: '', note: '' });
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    fetchTransactions();
+    // eslint-disable-next-line
+  }, [search, typeFilter, categoryFilter]);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    const params = {
+      search,
+      type: typeFilter !== 'all' ? typeFilter : undefined,
+      category: categoryFilter !== 'all' ? categoryFilter : undefined
+    };
+    const res = await adminTransactionApi.getAll(params, token);
+    setTransactions(res.data || []);
+    setLoading(false);
+  };
+
+  const handleCreate = async () => {
+    setLoading(true);
+    await adminTransactionApi.create(form, token);
+    setShowModal(false);
+    fetchTransactions();
+    setLoading(false);
+  };
+  const handleUpdate = async () => {
+    setLoading(true);
+    await adminTransactionApi.update(selectedTransaction._id, form, token);
+    setShowModal(false);
+    fetchTransactions();
+    setLoading(false);
+  };
+  const handleDelete = async () => {
+    setLoading(true);
+    await adminTransactionApi.remove(selectedTransaction._id, token);
+    setShowModal(false);
+    fetchTransactions();
+    setLoading(false);
+  };
 
   const openModal = (type, tx = null) => {
     setModalType(type);
@@ -114,7 +150,7 @@ export default function AdminTransactions() {
                   <input className="w-full px-3 py-2 border rounded" placeholder="Ghi chú" value={form.note} onChange={e => setForm(f => ({...f, note: e.target.value}))} />
                 </div>
                 <div className="flex gap-2 mt-6">
-                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Lưu</button>
+                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={handleCreate} disabled={loading}>{loading ? 'Đang tạo...' : 'Lưu'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>
@@ -134,7 +170,7 @@ export default function AdminTransactions() {
                   <input className="w-full px-3 py-2 border rounded" placeholder="Ghi chú" value={form.note} onChange={e => setForm(f => ({...f, note: e.target.value}))} />
                 </div>
                 <div className="flex gap-2 mt-6">
-                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Lưu</button>
+                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={handleUpdate} disabled={loading}>{loading ? 'Đang lưu...' : 'Lưu'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>
@@ -160,7 +196,7 @@ export default function AdminTransactions() {
                 <h2 className="text-xl font-bold mb-4 text-red-600">Xác nhận xoá giao dịch</h2>
                 <p className="mb-6">Bạn có chắc chắn muốn xoá giao dịch này? Hành động này không thể hoàn tác.</p>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 bg-red-500 text-white rounded hover:bg-red-600">Xoá</button>
+                  <button className="flex-1 py-2 bg-red-500 text-white rounded hover:bg-red-600" onClick={handleDelete} disabled={loading}>{loading ? 'Đang xoá...' : 'Xoá'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>

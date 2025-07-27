@@ -29,7 +29,7 @@ app.use(helmet());
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100
+  max: 10000 // tăng lên 10,000 requests mỗi 15 phút
 });
 app.use('/api/', limiter);
 

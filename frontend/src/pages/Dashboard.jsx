@@ -25,6 +25,10 @@ function Dashboard() {
   const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [animateCards, setAnimateCards] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
+
+  // Thêm state để trigger animation khi dữ liệu thay đổi
+  const [chartKey, setChartKey] = useState(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -203,20 +207,32 @@ function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  useEffect(() => {
+    setAnimateCards(true);
+    // Tự động ẩn banner sau 4 giây
+    if (showBanner) {
+      const timer = setTimeout(() => setShowBanner(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [showBanner]);
+
+  useEffect(() => {
+    setChartKey(prev => prev + 1); // Mỗi lần dữ liệu đổi sẽ trigger lại animation
+  }, [monthlyData, expenseCategories, trendData]);
 
 
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-8 bg-gray-200 rounded w-1/3 skeleton"></div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[1,2,3,4].map(i => (
-            <div key={i} className="bg-gray-200 h-32 rounded-xl"></div>
+            <div key={i} className="bg-gray-200 h-32 rounded-xl skeleton"></div>
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-gray-200 h-80 rounded-xl"></div>
-          <div className="bg-gray-200 h-80 rounded-xl"></div>
+          <div className="bg-gray-200 h-80 rounded-xl skeleton"></div>
+          <div className="bg-gray-200 h-80 rounded-xl skeleton"></div>
         </div>
       </div>
     );
@@ -224,6 +240,15 @@ function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {/* Animated Notification Bar */}
+      {showBanner && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-xl px-4">
+          <div className="bg-gradient-to-r from-indigo-500 via-blue-500 to-green-400 text-white py-3 px-6 rounded-xl shadow-lg flex items-center justify-center animate-slidein">
+            <svg className="h-6 w-6 mr-2 animate-bounce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+            <span className="font-semibold">Chào mừng bạn đến với Bảng tổng quan tài chính! 🎉</span>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -239,9 +264,7 @@ function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Income Card */}
-        <div className={`bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-2xl border border-green-200 dark:border-green-700 transform transition-all duration-500 hover:scale-105 hover:shadow-lg ${
-          animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`}>
+        <div className={`bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-6 rounded-2xl border border-green-200 dark:border-green-700 transform transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-green-300/40 dark:hover:shadow-green-500/30 hover:ring-2 hover:ring-green-400/40 ${animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-600 dark:text-green-400 text-sm font-medium mb-1">Tổng thu nhập</p>
@@ -260,9 +283,7 @@ function Dashboard() {
         </div>
 
         {/* Total Expense Card */}
-        <div className={`bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-6 rounded-2xl border border-red-200 dark:border-red-700 transform transition-all duration-500 hover:scale-105 hover:shadow-lg ${
-          animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{animationDelay: '100ms'}}>
+        <div className={`bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-6 rounded-2xl border border-red-200 dark:border-red-700 transform transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-red-300/40 dark:hover:shadow-red-500/30 hover:ring-2 hover:ring-red-400/40 ${animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{animationDelay: '100ms'}}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-1">Tổng chi tiêu</p>
@@ -281,9 +302,7 @@ function Dashboard() {
         </div>
 
         {/* Balance Card */}
-        <div className={`bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-2xl border border-blue-200 dark:border-blue-700 transform transition-all duration-500 hover:scale-105 hover:shadow-lg ${
-          animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{animationDelay: '200ms'}}>
+        <div className={`bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-6 rounded-2xl border border-blue-200 dark:border-blue-700 transform transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-blue-300/40 dark:hover:shadow-blue-500/30 hover:ring-2 hover:ring-blue-400/40 ${animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{animationDelay: '200ms'}}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-600 dark:text-blue-400 text-sm font-medium mb-1">Số dư hiện tại</p>
@@ -304,9 +323,7 @@ function Dashboard() {
         </div>
 
         {/* Transactions Card */}
-        <div className={`bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 rounded-2xl border border-purple-200 dark:border-purple-700 transform transition-all duration-500 hover:scale-105 hover:shadow-lg ${
-          animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{animationDelay: '300ms'}}>
+        <div className={`bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-6 rounded-2xl border border-purple-200 dark:border-purple-700 transform transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-purple-300/40 dark:hover:shadow-purple-500/30 hover:ring-2 hover:ring-purple-400/40 ${animateCards ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`} style={{animationDelay: '300ms'}}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-600 dark:text-purple-400 text-sm font-medium mb-1">Giao dịch</p>
@@ -344,7 +361,7 @@ function Dashboard() {
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart key={chartKey} data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="name" stroke="#666" />
                 <YAxis stroke="#666" />
@@ -357,8 +374,8 @@ function Dashboard() {
                   }}
                   formatter={(value) => [value.toLocaleString('vi-VN') + ' ₫', '']}
                 />
-                <Bar dataKey="income" name="Thu nhập" fill="#10B981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" name="Chi tiêu" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" name="Thu nhập" fill="#10B981" radius={[4, 4, 0, 0]} isAnimationActive={true} animationDuration={1200} />
+                <Bar dataKey="expense" name="Chi tiêu" fill="#EF4444" radius={[4, 4, 0, 0]} isAnimationActive={true} animationDuration={1200} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -403,7 +420,7 @@ function Dashboard() {
         <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">Xu hướng số dư</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <LineChart key={chartKey} data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="name" stroke="#666" />
               <YAxis stroke="#666" />
@@ -423,6 +440,8 @@ function Dashboard() {
                 strokeWidth={3}
                 dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
                 activeDot={{ r: 8, stroke: '#3B82F6', strokeWidth: 2 }}
+                isAnimationActive={true}
+                animationDuration={1200}
               />
             </LineChart>
           </ResponsiveContainer>

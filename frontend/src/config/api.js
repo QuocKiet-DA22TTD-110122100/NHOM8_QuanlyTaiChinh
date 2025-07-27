@@ -1,7 +1,7 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const API_BASE_URL = isDevelopment 
-  ? 'http://localhost:5001'  // Development - kết nối trực tiếp
+  ? 'http://localhost:5000'  // Development - kết nối trực tiếp
   : '';  // Production - dùng đường dẫn tương đối, proxy /api/ đã được nginx chuyển
 
 export const API_ENDPOINTS = {

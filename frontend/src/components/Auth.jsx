@@ -23,13 +23,19 @@ const Auth = ({ onLogin }) => {
         ? { email: formData.email, password: formData.password }
         : formData;
 
+      console.log('🔍 Debug - API URL:', `${API_BASE_URL}${endpoint}`);
+      console.log('🔍 Debug - Request body:', body);
+      console.log('🔍 Debug - API_BASE_URL:', API_BASE_URL);
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
 
+      console.log('🔍 Debug - Response status:', response.status);
       const data = await response.json();
+      console.log('🔍 Debug - Response data:', data);
 
       if (data.success) {
         if (isLogin) {
@@ -37,10 +43,30 @@ const Auth = ({ onLogin }) => {
           toast.success('Đăng nhập thành công');
           onLogin(data.token);
         } else {
-          setError('');
-          toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
-          setIsLogin(true);
-          setFormData({ email: formData.email, password: '', name: '' });
+          // Đăng ký thành công, tự động đăng nhập
+          try {
+            const loginResponse = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: formData.email, password: formData.password })
+            });
+            const loginData = await loginResponse.json();
+            if (loginData.success) {
+              localStorage.setItem('token', loginData.token);
+              toast.success('Đăng ký & đăng nhập thành công!');
+              onLogin(loginData.token);
+            } else {
+              setError(loginData.message || 'Đăng ký thành công nhưng đăng nhập thất bại.');
+              toast.error(loginData.message || 'Đăng ký thành công nhưng đăng nhập thất bại.');
+              setIsLogin(true);
+              setFormData({ email: formData.email, password: '', name: '' });
+            }
+          } catch (err) {
+            setError('Đăng ký thành công nhưng lỗi đăng nhập: ' + err.message);
+            toast.error('Đăng ký thành công nhưng lỗi đăng nhập: ' + err.message);
+            setIsLogin(true);
+            setFormData({ email: formData.email, password: '', name: '' });
+          }
         }
       } else {
         setError(data.message || 'Có lỗi xảy ra');
@@ -52,6 +78,42 @@ const Auth = ({ onLogin }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Thêm hàm handleRipple cho nút
+  const handleRipple = (e) => {
+    const button = e.currentTarget;
+    const circle = document.createElement('span');
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - button.getBoundingClientRect().left - radius}px`;
+    circle.style.top = `${e.clientY - button.getBoundingClientRect().top - radius}px`;
+    circle.classList.add('ripple');
+    const ripple = button.getElementsByClassName('ripple')[0];
+    if (ripple) ripple.remove();
+    button.appendChild(circle);
+  };
+
+  const showCustomToast = (message, type = 'success') => {
+    toast(
+      <div className="custom-toast">
+        <span className="icon">{type === 'success' ? '🎉' : '⚠️'}</span>
+        {message}
+      </div>,
+      {
+        position: 'top-right',
+        autoClose: 3500,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        className: 'custom-toast',
+        bodyClassName: 'custom-toast',
+        icon: false
+      }
+    );
   };
 
   return (
@@ -123,7 +185,8 @@ const Auth = ({ onLogin }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              onClick={handleRipple}
+              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center relative overflow-hidden"
             >
               {loading ? (
                 <>

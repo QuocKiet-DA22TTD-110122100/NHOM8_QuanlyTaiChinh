@@ -9,6 +9,8 @@ import AdminUsers from './pages/AdminUsers';
 import AdminTransactions from './pages/AdminTransactions';
 import AdminCategories from './pages/AdminCategories';
 import AdminSystemSettings from './pages/AdminSystemSettings';
+import AdminReports from './pages/AdminReports';
+import AdminRoute from './components/AdminRoute';
 
 function AnimatedRoutes({ user, handleLogin, handleLogout }) {
   const location = useLocation();
@@ -27,10 +29,11 @@ function AnimatedRoutes({ user, handleLogin, handleLogout }) {
                 <Route path="/chi-tieu" element={<div>Chi tiêu page</div>} />
                 <Route path="/ngan-sach" element={<div>Ngân sách page</div>} />
                 <Route path="/bao-cao" element={<div>Báo cáo page</div>} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/transactions" element={<AdminTransactions />} />
-                <Route path="/admin/categories" element={<AdminCategories />} />
-                <Route path="/admin/settings" element={<AdminSystemSettings />} />
+                <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                <Route path="/admin/transactions" element={<AdminRoute><AdminTransactions /></AdminRoute>} />
+                <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+                <Route path="/admin/settings" element={<AdminRoute><AdminSystemSettings /></AdminRoute>} />
+                <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </DashboardLayout>

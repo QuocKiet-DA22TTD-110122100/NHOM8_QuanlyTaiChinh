@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Frontend API Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Configuration</h3>
+        <p><strong>API Base URL:</strong> <span id="apiBaseUrl"></span></p>
+        <p><strong>Environment:</strong> <span id="environment"></span></p>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 1: Register New User</h3>
+        <button onclick="testRegister()">Test Register</button>
+        <div id="registerResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Login with Registered User</h3>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Login with Wrong Password</h3>
+        <button onclick="testWrongPassword()">Test Wrong Password</button>
+        <div id="wrongPasswordResult"></div>
+    </div>
+
+    <script>
+        // Simulate the same configuration as React app
+        const isDevelopment = true; // Simulate NODE_ENV === 'development'
+        const API_BASE_URL = isDevelopment 
+            ? 'http://localhost:5000'  // Development - kết nối trực tiếp
+            : '';  // Production - dùng đường dẫn tương đối
+        
+        const API_ENDPOINTS = {
+            AUTH: {
+                LOGIN: '/api/v1/auth/login',
+                REGISTER: '/api/v1/auth/register',
+                VERIFY: '/api/v1/auth/verify'
+            },
+            HEALTH: '/api/v1/health'
+        };
+        
+        // Display configuration
+        document.getElementById('apiBaseUrl').textContent = API_BASE_URL;
+        document.getElementById('environment').textContent = isDevelopment ? 'Development' : 'Production';
+        
+        let testUser = {
+            email: `test${Date.now()}@example.com`,
+            password: '123456',
+            name: 'Test User'
+        };
+        
+        async function testRegister() {
+            const resultDiv = document.getElementById('registerResult');
+            resultDiv.innerHTML = '<p class="info">Testing registration...</p>';
+            
+            try {
+                console.log('🔍 Debug - API URL:', `${API_BASE_URL}${API_ENDPOINTS.AUTH.REGISTER}`);
+                console.log('🔍 Debug - Request body:', testUser);
+                console.log('🔍 Debug - API_BASE_URL:', API_BASE_URL);
+                
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REGISTER}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testUser)
+                });
+                
+                console.log('🔍 Debug - Response status:', response.status);
+                const data = await response.json();
+                console.log('🔍 Debug - Response data:', data);
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Registration successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Registration failed: ${data.message}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p class="info">Testing login...</p>';
+            
+            try {
+                console.log('🔍 Debug - API URL:', `${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`);
+                console.log('🔍 Debug - Request body:', { email: testUser.email, password: testUser.password });
+                
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: testUser.email, password: testUser.password })
+                });
+                
+                console.log('🔍 Debug - Response status:', response.status);
+                const data = await response.json();
+                console.log('🔍 Debug - Response data:', data);
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Login successful!</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Login failed: ${data.message}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        async function testWrongPassword() {
+            const resultDiv = document.getElementById('wrongPasswordResult');
+            resultDiv.innerHTML = '<p class="info">Testing wrong password...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: testUser.email, password: 'wrongpassword' })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Correctly rejected wrong password</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Should have rejected wrong password</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

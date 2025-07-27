@@ -25,19 +25,17 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  status: {
+    type: String,
+    enum: ['active', 'locked'],
+    default: 'active'
+  },
   lastActive: {
     type: Date,
     default: Date.now
   }
 }, {
   timestamps: true
-});
-
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 // Compare password method

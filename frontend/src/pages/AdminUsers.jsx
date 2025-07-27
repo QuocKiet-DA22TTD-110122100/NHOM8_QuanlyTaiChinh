@@ -1,17 +1,11 @@
-import { useState } from 'react';
-
-const mockUsers = [
-  { id: 1, name: 'Nguyễn Văn A', email: 'a@example.com', role: 'user', status: 'active' },
-  { id: 2, name: 'Trần Thị B', email: 'b@example.com', role: 'admin', status: 'active' },
-  { id: 3, name: 'Lê Văn C', email: 'c@example.com', role: 'ketoan', status: 'locked' },
-];
+import { useEffect, useState } from 'react';
+import { adminUserApi } from '../services/adminUserApi';
 
 const roleColors = {
   user: 'bg-blue-100 text-blue-700',
   admin: 'bg-green-100 text-green-700',
   ketoan: 'bg-yellow-100 text-yellow-700',
 };
-
 const roles = [
   { value: 'user', label: 'Người dùng' },
   { value: 'admin', label: 'Quản trị viên' },
@@ -19,12 +13,63 @@ const roles = [
 ];
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('create'); // create | edit | role | lock | delete
+  const [modalType, setModalType] = useState('create');
   const [selectedUser, setSelectedUser] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', role: 'user', status: 'active' });
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem('token');
+
+  // Load users
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line
+  }, [search]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    const res = await adminUserApi.getAll({ search }, token);
+    setUsers(res.data || []);
+    setLoading(false);
+  };
+
+  const handleCreate = async () => {
+    setLoading(true);
+    await adminUserApi.create(form, token);
+    setShowModal(false);
+    fetchUsers();
+    setLoading(false);
+  };
+  const handleUpdate = async () => {
+    setLoading(true);
+    await adminUserApi.update(selectedUser._id, form, token);
+    setShowModal(false);
+    fetchUsers();
+    setLoading(false);
+  };
+  const handleDelete = async () => {
+    setLoading(true);
+    await adminUserApi.remove(selectedUser._id, token);
+    setShowModal(false);
+    fetchUsers();
+    setLoading(false);
+  };
+  const handleChangeRole = async () => {
+    setLoading(true);
+    await adminUserApi.changeRole(selectedUser._id, form.role, token);
+    setShowModal(false);
+    fetchUsers();
+    setLoading(false);
+  };
+  const handleChangeStatus = async () => {
+    setLoading(true);
+    await adminUserApi.changeStatus(selectedUser._id, selectedUser.status === 'active' ? 'locked' : 'active', token);
+    setShowModal(false);
+    fetchUsers();
+    setLoading(false);
+  };
 
   const openModal = (type, user = null) => {
     setModalType(type);
@@ -109,7 +154,7 @@ export default function AdminUsers() {
                   </select>
                 </div>
                 <div className="flex gap-2 mt-6">
-                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Lưu</button>
+                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={handleCreate} disabled={loading}>{loading ? 'Đang tạo...' : 'Lưu'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>
@@ -125,7 +170,7 @@ export default function AdminUsers() {
                   </select>
                 </div>
                 <div className="flex gap-2 mt-6">
-                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Lưu</button>
+                  <button className="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={handleUpdate} disabled={loading}>{loading ? 'Đang cập nhật...' : 'Lưu'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>
@@ -139,7 +184,7 @@ export default function AdminUsers() {
                   </select>
                 </div>
                 <div className="flex gap-2 mt-6">
-                  <button className="flex-1 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">Cập nhật</button>
+                  <button className="flex-1 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600" onClick={handleChangeRole} disabled={loading}>{loading ? 'Đang cập nhật...' : 'Cập nhật'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>
@@ -149,7 +194,7 @@ export default function AdminUsers() {
                 <h2 className="text-xl font-bold mb-4">{selectedUser?.status === 'active' ? 'Khoá tài khoản' : 'Mở khoá tài khoản'}</h2>
                 <p className="mb-6">Bạn có chắc chắn muốn {selectedUser?.status === 'active' ? 'khoá' : 'mở khoá'} tài khoản <b>{selectedUser?.name}</b>?</p>
                 <div className="flex gap-2">
-                  <button className={`flex-1 py-2 ${selectedUser?.status === 'active' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded`}>{selectedUser?.status === 'active' ? 'Khoá' : 'Mở khoá'}</button>
+                  <button className={`flex-1 py-2 ${selectedUser?.status === 'active' ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 hover:bg-green-600'} text-white rounded`} onClick={handleChangeStatus} disabled={loading}>{loading ? 'Đang thay đổi...' : selectedUser?.status === 'active' ? 'Khoá' : 'Mở khoá'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>
@@ -159,7 +204,7 @@ export default function AdminUsers() {
                 <h2 className="text-xl font-bold mb-4 text-red-600">Xác nhận xoá người dùng</h2>
                 <p className="mb-6">Bạn có chắc chắn muốn xoá tài khoản <b>{selectedUser?.name}</b>? Hành động này không thể hoàn tác.</p>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 bg-red-500 text-white rounded hover:bg-red-600">Xoá</button>
+                  <button className="flex-1 py-2 bg-red-500 text-white rounded hover:bg-red-600" onClick={handleDelete} disabled={loading}>{loading ? 'Đang xoá...' : 'Xoá'}</button>
                   <button className="flex-1 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400" onClick={closeModal}>Huỷ</button>
                 </div>
               </>

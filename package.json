@@ -26,6 +26,8 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "docker:clean": "docker-compose down -v --remove-orphans",
+    "docker:mongo": "docker-compose up mongo -d",
+    "docker:stop": "docker-compose down",
     "migrate": "node scripts/migrate.js",
     "migrate:rollback": "node scripts/migrate-rollback.js",
     "seed": "node scripts/seed.js",
@@ -38,6 +40,7 @@
     "docs": "swagger-jsdoc -d config/swagger.js -o swagger.json && swagger-ui-serve swagger.json",
     "docs:generate": "node scripts/generate-docs.js",
     "health": "node scripts/health-check.js",
+    "check:mongo": "node scripts/check-mongo.js",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop ecosystem.config.js",
     "pm2:restart": "pm2 restart ecosystem.config.js",
@@ -150,11 +153,6 @@
     "wait-on": "^8.0.1"
   },
   
-  "scripts": {
-    "check:mongo": "node scripts/check-mongo.js",
-    "docker:mongo": "docker-compose up mongo -d",
-    "docker:stop": "docker-compose down"
-  },
 
   "engines": {
     "node": ">=18.0.0",

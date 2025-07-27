@@ -1,57 +1,141 @@
+version: '3.8'
+
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5000"
-    environment:
-      - NODE_ENV=development
-      - MONGO_URI=mongodb://admin:123456@mongo:27017/financeapp?authSource=admin
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-secret-key
-      - PORT=5000
-    depends_on:
-      - mongo
-      - redis
-    networks:
-      - finance-network
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    networks:
-      - finance-network
-
+  # Database MongoDB
   mongo:
     image: mongo:6.0
-    container_name: mongo
+    container_name: finance_mongo
     ports:
-      - "27019:27017"
+      - "27017:27017"  # Giữ port chuẩn cho development
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: financeapp
     volumes:
-      - mongodb_data:/data/db
+      - mongo_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - finance-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
+  # Cache Redis  
   redis:
     image: redis:7.0-alpine
-    container_name: redis
+    container_name: finance_redis
     ports:
-      - "6381:6379"
+      - "6379:6379"  # Giữ port chuẩn cho development
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
       - finance-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # Backend API
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance_backend
+    ports:
+      - "5000:5000"  # Thống nhất với server.js (PORT=5000)
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGO_URI=mongodb://admin:123456@mongo:27017/financeapp?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-secret-key-change-in-production
+      - FRONTEND_URL=http://localhost:3000
+      - LOG_LEVEL=debug
+      - MAX_FILE_SIZE=5242880
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend Web
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: finance_frontend
+    ports:
+      - "3000:80"  # Nginx serves on port 80 inside container
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000/api/v1
+    networks:
+      - finance-network
+    restart: unless-stopped
+
+  # Development tools (optional)
+  adminer:
+    image: adminer:4.8.1
+    container_name: finance_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    networks:
+      - finance-network
+    profiles:
+      - tools
+    restart: unless-stopped
+
+  # Redis Commander (optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: finance_redis_commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - finance-network
+    profiles:
+      - tools
+    restart: unless-stopped
 
 volumes:
-  mongodb_data:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
 
 networks:
   finance-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
