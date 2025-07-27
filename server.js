@@ -62,25 +62,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Swagger configuration
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: '💰 Hệ thống Quản lý Tài chính Cá nhân',
-      version: '2.0.0',
-      description: 'API for personal finance management'
-    },
-    servers: [
-      {
-        url: 'http://localhost:5000',
-        description: 'Development Server'
-      }
-    ]
-  },
-  apis: ['./routes/*.js', './server.js']
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+const swaggerSpec = require('./config/swagger');
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
