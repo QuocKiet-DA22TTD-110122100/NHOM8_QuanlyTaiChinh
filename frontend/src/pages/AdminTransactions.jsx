@@ -223,8 +223,15 @@ export default function AdminTransactions() {
         <select className="px-3 py-2 border rounded-lg" value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
           <option value="all">Tất cả danh mục</option>
           <option value="Lương">Lương</option>
+          <option value="Thưởng">Thưởng</option>
+          <option value="Đầu tư">Đầu tư</option>
+          <option value="Kinh doanh">Kinh doanh</option>
           <option value="Ăn uống">Ăn uống</option>
-          <option value="Đi lại">Đi lại</option>
+          <option value="Di chuyển">Di chuyển</option>
+          <option value="Mua sắm">Mua sắm</option>
+          <option value="Hóa đơn">Hóa đơn</option>
+          <option value="Giải trí">Giải trí</option>
+          <option value="Sức khỏe">Sức khỏe</option>
         </select>
       </div>
       <div className="overflow-x-auto rounded-xl shadow border">
@@ -241,12 +248,8 @@ export default function AdminTransactions() {
             </tr>
           </thead>
           <tbody>
-            {transactions.filter(tx =>
-              (search === '' || tx.user.toLowerCase().includes(search.toLowerCase()) || tx.note.toLowerCase().includes(search.toLowerCase())) &&
-              (typeFilter === 'all' || tx.type === typeFilter) &&
-              (categoryFilter === 'all' || tx.category === categoryFilter)
-            ).map(tx => (
-              <tr key={tx.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            {transactions.map(tx => (
+              <tr key={tx._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <td className="py-3 px-4 font-medium">{tx.user}</td>
                 <td className="py-3 px-4">
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${typeColors[tx.type]}`}>{tx.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</span>
