@@ -12,7 +12,7 @@ export default function AdminTransactions() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('create'); // create | edit | detail | delete
+  const [modalType, setModalType] = useState('create');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [form, setForm] = useState({ user: '', type: 'income', category: '', amount: '', date: '', note: '' });
   const [loading, setLoading] = useState(false);
@@ -20,153 +20,145 @@ export default function AdminTransactions() {
 
   useEffect(() => {
     fetchTransactions();
-    // eslint-disable-next-line
   }, [search, typeFilter, categoryFilter]);
 
   const fetchTransactions = async () => {
     setLoading(true);
-    try {
-      const params = {
-        search,
-        type: typeFilter !== 'all' ? typeFilter : undefined,
-        category: categoryFilter !== 'all' ? categoryFilter : undefined
-      };
-      const res = await adminTransactionApi.getAll(params, token);
-      setTransactions(res.data || []);
-    } catch (error) {
-      console.log('API không khả dụng, sử dụng dữ liệu mẫu');
-      // Dữ liệu mẫu cho admin - giao dịch của tất cả users
-      const sampleTransactions = [
-        {
-          _id: '1',
-          user: 'Duy',
-          userEmail: 'duy@example.com',
-          type: 'income',
-          category: 'Lương',
-          amount: 15000000,
-          date: '2024-07-15',
-          note: 'Lương tháng 7'
-        },
-        {
-          _id: '2',
-          user: 'Hoang',
-          userEmail: 'hoang@example.com',
-          type: 'income',
-          category: 'Thưởng',
-          amount: 5000000,
-          date: '2024-07-16',
-          note: 'Thưởng dự án'
-        },
-        {
-          _id: '3',
-          user: 'Kha',
-          userEmail: 'kha@example.com',
-          type: 'expense',
-          category: 'Ăn uống',
-          amount: 3000000,
-          date: '2024-07-17',
-          note: 'Chi phí ăn uống'
-        },
-        {
-          _id: '4',
-          user: 'Hung',
-          userEmail: 'hung@example.com',
-          type: 'expense',
-          category: 'Di chuyển',
-          amount: 2000000,
-          date: '2024-07-18',
-          note: 'Xăng xe và taxi'
-        },
-        {
-          _id: '5',
-          user: 'Hao',
-          userEmail: 'hao@example.com',
-          type: 'income',
-          category: 'Đầu tư',
-          amount: 8000000,
-          date: '2024-07-19',
-          note: 'Lãi tiết kiệm'
-        },
-        {
-          _id: '6',
-          user: 'Khanh',
-          userEmail: 'khanh@example.com',
-          type: 'expense',
-          category: 'Mua sắm',
-          amount: 1500000,
-          date: '2024-07-20',
-          note: 'Quần áo và đồ dùng'
-        },
-        {
-          _id: '7',
-          user: 'Duy Han',
-          userEmail: 'duyhan@example.com',
-          type: 'income',
-          category: 'Kinh doanh',
-          amount: 12000000,
-          date: '2024-07-21',
-          note: 'Thu nhập kinh doanh'
-        },
-        {
-          _id: '8',
-          user: 'Ngan',
-          userEmail: 'ngan@example.com',
-          type: 'expense',
-          category: 'Hóa đơn',
-          amount: 800000,
-          date: '2024-07-22',
-          note: 'Điện nước internet'
-        },
-        {
-          _id: '9',
-          user: 'Phat',
-          userEmail: 'phat@example.com',
-          type: 'expense',
-          category: 'Giải trí',
-          amount: 500000,
-          date: '2024-07-23',
-          note: 'Xem phim và giải trí'
-        },
-        {
-          _id: '10',
-          user: 'Trang',
-          userEmail: 'trang@example.com',
-          type: 'income',
-          category: 'Lương',
-          amount: 18000000,
-          date: '2024-07-24',
-          note: 'Lương tháng 7'
-        },
-        {
-          _id: '11',
-          user: 'Tham',
-          userEmail: 'tham@example.com',
-          type: 'expense',
-          category: 'Sức khỏe',
-          amount: 1000000,
-          date: '2024-07-25',
-          note: 'Khám bệnh và thuốc'
-        }
-      ];
-      
-      // Lọc theo search term
-      let filteredTransactions = sampleTransactions.filter(tx => 
-        tx.user.toLowerCase().includes(search.toLowerCase()) ||
-        tx.note.toLowerCase().includes(search.toLowerCase())
-      );
-      
-      // Lọc theo type
-      if (typeFilter !== 'all') {
-        filteredTransactions = filteredTransactions.filter(tx => tx.type === typeFilter);
+    
+    // Force sử dụng dữ liệu mẫu vì API chưa hoạt động
+    console.log('Sử dụng dữ liệu mẫu cho admin transactions');
+    
+    // Dữ liệu mẫu cho admin - giao dịch của tất cả users
+    const sampleTransactions = [
+      {
+        _id: '1',
+        user: 'Duy',
+        userEmail: 'duy@example.com',
+        type: 'income',
+        category: 'Lương',
+        amount: 15000000,
+        date: '2024-07-15',
+        note: 'Lương tháng 7'
+      },
+      {
+        _id: '2',
+        user: 'Hoang',
+        userEmail: 'hoang@example.com',
+        type: 'income',
+        category: 'Thưởng',
+        amount: 5000000,
+        date: '2024-07-16',
+        note: 'Thưởng dự án'
+      },
+      {
+        _id: '3',
+        user: 'Kha',
+        userEmail: 'kha@example.com',
+        type: 'expense',
+        category: 'Ăn uống',
+        amount: 3000000,
+        date: '2024-07-17',
+        note: 'Chi phí ăn uống'
+      },
+      {
+        _id: '4',
+        user: 'Hung',
+        userEmail: 'hung@example.com',
+        type: 'expense',
+        category: 'Di chuyển',
+        amount: 2000000,
+        date: '2024-07-18',
+        note: 'Xăng xe và taxi'
+      },
+      {
+        _id: '5',
+        user: 'Hao',
+        userEmail: 'hao@example.com',
+        type: 'income',
+        category: 'Đầu tư',
+        amount: 8000000,
+        date: '2024-07-19',
+        note: 'Lãi tiết kiệm'
+      },
+      {
+        _id: '6',
+        user: 'Khanh',
+        userEmail: 'khanh@example.com',
+        type: 'expense',
+        category: 'Mua sắm',
+        amount: 1500000,
+        date: '2024-07-20',
+        note: 'Quần áo và đồ dùng'
+      },
+      {
+        _id: '7',
+        user: 'Duy Han',
+        userEmail: 'duyhan@example.com',
+        type: 'income',
+        category: 'Kinh doanh',
+        amount: 12000000,
+        date: '2024-07-21',
+        note: 'Thu nhập kinh doanh'
+      },
+      {
+        _id: '8',
+        user: 'Ngan',
+        userEmail: 'ngan@example.com',
+        type: 'expense',
+        category: 'Hóa đơn',
+        amount: 800000,
+        date: '2024-07-22',
+        note: 'Điện nước internet'
+      },
+      {
+        _id: '9',
+        user: 'Phat',
+        userEmail: 'phat@example.com',
+        type: 'expense',
+        category: 'Giải trí',
+        amount: 500000,
+        date: '2024-07-23',
+        note: 'Xem phim và giải trí'
+      },
+      {
+        _id: '10',
+        user: 'Trang',
+        userEmail: 'trang@example.com',
+        type: 'income',
+        category: 'Lương',
+        amount: 18000000,
+        date: '2024-07-24',
+        note: 'Lương tháng 7'
+      },
+      {
+        _id: '11',
+        user: 'Tham',
+        userEmail: 'tham@example.com',
+        type: 'expense',
+        category: 'Sức khỏe',
+        amount: 1000000,
+        date: '2024-07-25',
+        note: 'Khám bệnh và thuốc'
       }
-      
-      // Lọc theo category
-      if (categoryFilter !== 'all') {
-        filteredTransactions = filteredTransactions.filter(tx => tx.category === categoryFilter);
-      }
-      
-      setTransactions(filteredTransactions);
+    ];
+    
+    // Lọc theo search term
+    let filteredTransactions = sampleTransactions.filter(tx => 
+      tx.user.toLowerCase().includes(search.toLowerCase()) ||
+      tx.note.toLowerCase().includes(search.toLowerCase())
+    );
+    
+    // Lọc theo type
+    if (typeFilter !== 'all') {
+      filteredTransactions = filteredTransactions.filter(tx => tx.type === typeFilter);
     }
+    
+    // Lọc theo category
+    if (categoryFilter !== 'all') {
+      filteredTransactions = filteredTransactions.filter(tx => tx.category === categoryFilter);
+    }
+    
+    setTransactions(filteredTransactions);
     setLoading(false);
   };
 
@@ -177,6 +169,7 @@ export default function AdminTransactions() {
     fetchTransactions();
     setLoading(false);
   };
+
   const handleUpdate = async () => {
     setLoading(true);
     await adminTransactionApi.update(selectedTransaction._id, form, token);
@@ -184,6 +177,7 @@ export default function AdminTransactions() {
     fetchTransactions();
     setLoading(false);
   };
+
   const handleDelete = async () => {
     setLoading(true);
     await adminTransactionApi.remove(selectedTransaction._id, token);
@@ -199,6 +193,7 @@ export default function AdminTransactions() {
     else if (type === 'create') setForm({ user: '', type: 'income', category: '', amount: '', date: '', note: '' });
     setShowModal(true);
   };
+
   const closeModal = () => setShowModal(false);
 
   return (
@@ -252,7 +247,9 @@ export default function AdminTransactions() {
               <tr key={tx._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <td className="py-3 px-4 font-medium">{tx.user}</td>
                 <td className="py-3 px-4">
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${typeColors[tx.type]}`}>{tx.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}</span>
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${typeColors[tx.type]}`}>
+                    {tx.type === 'income' ? 'Thu nhập' : 'Chi tiêu'}
+                  </span>
                 </td>
                 <td className="py-3 px-4">{tx.category}</td>
                 <td className="py-3 px-4 text-right">{tx.amount.toLocaleString('vi-VN')} ₫</td>
