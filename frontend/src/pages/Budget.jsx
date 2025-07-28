@@ -10,6 +10,13 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 
+// Helper function to get user-specific key
+const getUserKey = (baseKey) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user?.id || user?.email || 'anonymous';
+  return `${baseKey}_${userId}`;
+};
+
 const categories = [
   { id: 'food', name: 'Ăn uống', color: 'bg-red-100 text-red-800', icon: '🍴', budgetColor: 'from-red-500 to-pink-600' },
   { id: 'transport', name: 'Di chuyển', color: 'bg-blue-100 text-blue-800', icon: '🚗', budgetColor: 'from-blue-500 to-indigo-600' },
@@ -29,8 +36,8 @@ function Budget() {
   const [tempBudget, setTempBudget] = useState('');
 
   useEffect(() => {
-    let savedBudgets = JSON.parse(localStorage.getItem('budgets')) || {};
-    let savedExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    let savedBudgets = JSON.parse(localStorage.getItem(getUserKey('budgets'))) || {};
+    let savedExpenses = JSON.parse(localStorage.getItem(getUserKey('expenses'))) || [];
     
     // Nếu không có dữ liệu ngân sách, tạo dữ liệu mẫu
     const currentMonth = new Date().toISOString().slice(0, 7);
@@ -48,7 +55,7 @@ function Budget() {
         }
       };
       savedBudgets = { ...savedBudgets, ...sampleBudgets };
-      localStorage.setItem('budgets', JSON.stringify(savedBudgets));
+      localStorage.setItem(getUserKey('budgets'), JSON.stringify(savedBudgets));
     }
     
     setBudgets(savedBudgets);
@@ -64,7 +71,7 @@ function Budget() {
       }
     };
     setBudgets(updatedBudgets);
-    localStorage.setItem('budgets', JSON.stringify(updatedBudgets));
+    localStorage.setItem(getUserKey('budgets'), JSON.stringify(updatedBudgets));
     toast.success('Cập nhật ngân sách thành công!');
   };
 

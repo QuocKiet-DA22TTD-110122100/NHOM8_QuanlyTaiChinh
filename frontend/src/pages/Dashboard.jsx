@@ -12,6 +12,13 @@ import {
 } from '@heroicons/react/24/outline';
 import { reportsAPI, unifiedAPI } from '../services/api';
 
+// Helper function to get user-specific key
+const getUserKey = (baseKey) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user?.id || user?.email || 'anonymous';
+  return `${baseKey}_${userId}`;
+};
+
 function Dashboard() {
   const [summary, setSummary] = useState({
     totalIncome: 0,
@@ -90,11 +97,11 @@ function Dashboard() {
           ];
           
           // Lưu dữ liệu mẫu vào localStorage
-          localStorage.setItem('incomes', JSON.stringify([
+          localStorage.setItem(getUserKey('incomes'), JSON.stringify([
             { id: '1', amount: 15000000, category: 'Lương', description: 'Lương tháng 7', date: new Date().toISOString().split('T')[0] },
             { id: '2', amount: 5000000, category: 'Thưởng', description: 'Thưởng dự án', date: new Date().toISOString().split('T')[0] }
           ]));
-          localStorage.setItem('expenses', JSON.stringify([
+          localStorage.setItem(getUserKey('expenses'), JSON.stringify([
             { id: '3', amount: 3000000, category: 'Ăn uống', description: 'Chi phí ăn uống tháng 7', date: new Date().toISOString().split('T')[0] },
             { id: '4', amount: 2000000, category: 'Di chuyển', description: 'Xăng xe và taxi', date: new Date().toISOString().split('T')[0] },
             { id: '5', amount: 1500000, category: 'Mua sắm', description: 'Quần áo và đồ dùng', date: new Date().toISOString().split('T')[0] }

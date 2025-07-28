@@ -10,6 +10,13 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
 
+// Helper function to get user-specific key
+const getUserKey = (baseKey) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user?.id || user?.email || 'anonymous';
+  return `${baseKey}_${userId}`;
+};
+
 function Expense() {
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
@@ -35,7 +42,7 @@ function Expense() {
   ];
 
   useEffect(() => {
-    let savedExpenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    let savedExpenses = JSON.parse(localStorage.getItem(getUserKey('expenses'))) || [];
     
     // Nếu không có dữ liệu, tạo dữ liệu mẫu
     if (savedExpenses.length === 0) {
@@ -77,7 +84,7 @@ function Expense() {
         }
       ];
       savedExpenses = sampleExpenses;
-      localStorage.setItem('expenses', JSON.stringify(sampleExpenses));
+      localStorage.setItem(getUserKey('expenses'), JSON.stringify(sampleExpenses));
     }
     
     setExpenses(savedExpenses);
@@ -110,7 +117,7 @@ function Expense() {
 
     const updatedExpenses = [...expenses, newExpense];
     setExpenses(updatedExpenses);
-    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
+    localStorage.setItem(getUserKey('expenses'), JSON.stringify(updatedExpenses));
     
     toast.success('Thêm chi tiêu thành công!');
     setShowForm(false);
@@ -126,7 +133,7 @@ function Expense() {
   const handleDelete = (id) => {
     const updatedExpenses = expenses.filter(expense => expense.id !== id);
     setExpenses(updatedExpenses);
-    localStorage.setItem('expenses', JSON.stringify(updatedExpenses));
+    localStorage.setItem(getUserKey('expenses'), JSON.stringify(updatedExpenses));
     toast.success('Xóa chi tiêu thành công!');
   };
 

@@ -162,11 +162,18 @@ export const notificationsAPI = {
   }
 };
 
+// Helper function to get user-specific key
+const getUserKey = (baseKey) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const userId = user?.id || user?.email || 'anonymous';
+  return `${baseKey}_${userId}`;
+};
+
 // Fallback to localStorage if API is not available
 export const localStorageAPI = {
   // Income operations
   getIncomes: () => {
-    return JSON.parse(localStorage.getItem('incomes')) || [];
+    return JSON.parse(localStorage.getItem(getUserKey('incomes'))) || [];
   },
 
   saveIncome: (income) => {
@@ -177,19 +184,19 @@ export const localStorageAPI = {
       date: income.date || new Date().toISOString().split('T')[0]
     };
     incomes.push(newIncome);
-    localStorage.setItem('incomes', JSON.stringify(incomes));
+    localStorage.setItem(getUserKey('incomes'), JSON.stringify(incomes));
     return newIncome;
   },
 
   deleteIncome: (id) => {
     const incomes = localStorageAPI.getIncomes();
     const filteredIncomes = incomes.filter(income => income.id !== id);
-    localStorage.setItem('incomes', JSON.stringify(filteredIncomes));
+    localStorage.setItem(getUserKey('incomes'), JSON.stringify(filteredIncomes));
   },
 
   // Expense operations
   getExpenses: () => {
-    return JSON.parse(localStorage.getItem('expenses')) || [];
+    return JSON.parse(localStorage.getItem(getUserKey('expenses'))) || [];
   },
 
   saveExpense: (expense) => {
@@ -200,30 +207,30 @@ export const localStorageAPI = {
       date: expense.date || new Date().toISOString().split('T')[0]
     };
     expenses.push(newExpense);
-    localStorage.setItem('expenses', JSON.stringify(expenses));
+    localStorage.setItem(getUserKey('expenses'), JSON.stringify(expenses));
     return newExpense;
   },
 
   deleteExpense: (id) => {
     const expenses = localStorageAPI.getExpenses();
     const filteredExpenses = expenses.filter(expense => expense.id !== id);
-    localStorage.setItem('expenses', JSON.stringify(filteredExpenses));
+    localStorage.setItem(getUserKey('expenses'), JSON.stringify(filteredExpenses));
   },
 
   // Budget operations
   getBudgets: () => {
-    return JSON.parse(localStorage.getItem('budgets')) || {};
+    return JSON.parse(localStorage.getItem(getUserKey('budgets'))) || {};
   },
 
   saveBudget: (category, amount) => {
     const budgets = localStorageAPI.getBudgets();
     budgets[category] = amount;
-    localStorage.setItem('budgets', JSON.stringify(budgets));
+    localStorage.setItem(getUserKey('budgets'), JSON.stringify(budgets));
   },
 
   // Notifications operations
   getNotifications: () => {
-    return JSON.parse(localStorage.getItem('notifications')) || [];
+    return JSON.parse(localStorage.getItem(getUserKey('notifications'))) || [];
   },
 
   saveNotification: (notification) => {
@@ -234,7 +241,7 @@ export const localStorageAPI = {
       time: new Date().toLocaleString('vi-VN')
     };
     notifications.unshift(newNotification);
-    localStorage.setItem('notifications', JSON.stringify(notifications));
+    localStorage.setItem(getUserKey('notifications'), JSON.stringify(notifications));
     return newNotification;
   },
 
@@ -243,11 +250,11 @@ export const localStorageAPI = {
     const updatedNotifications = notifications.map(notif => 
       notif.id === id ? { ...notif, read: true } : notif
     );
-    localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
+    localStorage.setItem(getUserKey('notifications'), JSON.stringify(updatedNotifications));
   },
 
   clearAllNotifications: () => {
-    localStorage.setItem('notifications', JSON.stringify([]));
+    localStorage.setItem(getUserKey('notifications'), JSON.stringify([]));
   }
 };
 
